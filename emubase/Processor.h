@@ -15,12 +15,14 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "Defines.h"
 #include "Memory.h"
 
-
 class CMemoryController;
 
 //////////////////////////////////////////////////////////////////////
 
 /// \brief KM1801VM2 processor
+
+#include "../PerfCounter.hpp"
+
 class CProcessor
 {
 
@@ -165,6 +167,9 @@ protected:  // PSW bits calculations
     bool static CheckAddForCarry(uint16_t a, uint16_t b);
     bool static CheckSubForCarry(uint8_t a, uint8_t b);
     bool static CheckSubForCarry(uint16_t a, uint16_t b);
+
+protected:
+    PerformanceCounter  m_perf_counters;
 
 protected:  // Implementation - instruction execution
     // No fields

@@ -289,6 +289,9 @@ void CProcessor::Execute()
         return;
     }
 
+    // Count global number of execution ticks
+    m_perf_counters.NextExecutionTick();
+
     m_internalTick = 0;  //ANYTHING UNKNOWN WILL CAUSE EXCEPTION (EMT)
 
     if (!CProcessor::InterruptProcessing())
@@ -542,6 +545,9 @@ void CProcessor::FetchInstruction()
     ASSERT((pc & 1) == 0); // it have to be word aligned
 
     m_instruction = GetWordExec(pc);
+
+    m_perf_counters.InstructionFetchedAt(pc, m_instruction);
+
     SetPC(GetPC() + 2);
 }
 
