@@ -42,7 +42,8 @@
 #include <tchar.h>
 
 // Define C99 stdint.h types for VS2008
-#ifdef _MSC_VER
+#ifdef _MSC_VER 
+#if _MSC_VER < 1600
    typedef unsigned __int8   uint8_t;
    typedef unsigned __int16  uint16_t;
    typedef signed   __int16  int16_t;
@@ -57,7 +58,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #endif
-
+#endif // #ifdef _MSCVER
 // TODO: reference additional headers your program requires here
 
 #include "Common.h"
