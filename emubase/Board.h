@@ -58,7 +58,7 @@ typedef struct kbd_row_tag
 //   samples    Number of samples to play.
 // Output:
 //   result     Bit to put in tape input port.
-typedef bool (CALLBACK* TAPEREADCALLBACK)(unsigned int samples);
+typedef BOOL (CALLBACK* TAPEREADCALLBACK)(unsigned int samples);
 
 // Tape emulator callback used to write a data to tape.
 // Input:
