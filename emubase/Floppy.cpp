@@ -479,6 +479,7 @@ void CFloppyController::FlushChanges()
         ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
         size_t dwBytesWritten = ::fwrite(&data, 1, 5120, m_pDrive->fpFile);
         //TODO: Проверка на ошибки записи
+        (void)dwBytesWritten;
     }
     else
     {
