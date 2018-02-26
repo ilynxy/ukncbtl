@@ -13,6 +13,7 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "stdafx.h"
 #include "WavPcmFile.h"
 #include <stdio.h>
+#include <Share.h>
 
 
 //////////////////////////////////////////////////////////////////////
@@ -88,7 +89,7 @@ HWAVPCMFILE WavPcmFile_Create(LPCTSTR filename, int sampleRate)
     const int channels = 1;
     const int blockAlign = channels * bitsPerSample / 8;
 
-    FILE* fpFileNew = ::_tfopen(filename, _T("w+b"));
+    FILE* fpFileNew = ::_tfsopen(filename, _T("w+b"), _SH_DENYWR);
     if (fpFileNew == NULL)
         return (HWAVPCMFILE) INVALID_HANDLE_VALUE;  // Failed to create file
 
@@ -119,13 +120,12 @@ HWAVPCMFILE WavPcmFile_Create(LPCTSTR filename, int sampleRate)
         return (HWAVPCMFILE) INVALID_HANDLE_VALUE;  // Failed to write consolidated header
     }
 
-    WAVPCMFILE* pWavPcm = (WAVPCMFILE*) ::malloc(sizeof(WAVPCMFILE));
+    WAVPCMFILE* pWavPcm = (WAVPCMFILE*) ::calloc(1, sizeof(WAVPCMFILE));
     if (pWavPcm == NULL)
     {
         ::fclose(fpFileNew);
         return (HWAVPCMFILE) INVALID_HANDLE_VALUE;  // Failed to allocate memory
     }
-    memset(pWavPcm, 0, sizeof(WAVPCMFILE));
     pWavPcm->fpFile = fpFileNew;
     pWavPcm->nChannels = channels;
     pWavPcm->nSampleFrequency = sampleRate;
@@ -142,7 +142,7 @@ HWAVPCMFILE WavPcmFile_Create(LPCTSTR filename, int sampleRate)
 
 HWAVPCMFILE WavPcmFile_Open(LPCTSTR filename)
 {
-    FILE* fpFileOpen = ::_tfopen(filename, _T("rb"));
+    FILE* fpFileOpen = ::_tfsopen(filename, _T("rb"), _SH_DENYWR);
     if (fpFileOpen == NULL)
         return (HWAVPCMFILE) INVALID_HANDLE_VALUE;  // Failed to open file
 
@@ -237,13 +237,12 @@ HWAVPCMFILE WavPcmFile_Open(LPCTSTR filename)
         ::fseek(fpFileOpen, offset, SEEK_SET);
     }
 
-    WAVPCMFILE* pWavPcm = (WAVPCMFILE*) ::malloc(sizeof(WAVPCMFILE));
+    WAVPCMFILE* pWavPcm = (WAVPCMFILE*) ::calloc(1, sizeof(WAVPCMFILE));
     if (pWavPcm == NULL)
     {
         ::fclose(fpFileOpen);
         return (HWAVPCMFILE) INVALID_HANDLE_VALUE;  // Failed to allocate memory
     }
-    ::memset(pWavPcm, 0, sizeof(WAVPCMFILE));
     pWavPcm->fpFile = fpFileOpen;
     pWavPcm->nChannels = channels;
     pWavPcm->nSampleFrequency = sampleFrequency;
