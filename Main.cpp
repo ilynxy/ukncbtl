@@ -89,10 +89,9 @@ int APIENTRY _tWinMain(
                 Emulator_Stop();
             else
             {
-                if (Emulator_SystemFrame())
-                {
-                    ScreenView_RedrawScreen();
-                }
+                Emulator_SystemFrame();
+
+                ScreenView_RedrawScreen();
             }
         }
 
@@ -121,7 +120,9 @@ int APIENTRY _tWinMain(
                 LONGLONG nTimeElapsed = (nFrameFinishTime.QuadPart - nFrameStartTime.QuadPart)
                         * 1000 / nPerformanceFrequency.QuadPart;
                 LONGLONG nFrameDelay = 1000 / 25 - 1;  // 1000 millisec / 25 = 40 millisec
-                if (Settings_GetRealSpeed() == 0x7fff)  // Speed 50%
+                if (Settings_GetRealSpeed() == 0x7ffe)  // Speed 25%
+                    nFrameDelay = 1000 / 25 * 4 - 1;
+                else if (Settings_GetRealSpeed() == 0x7fff)  // Speed 50%
                     nFrameDelay = 1000 / 25 * 2 - 1;
                 else if (Settings_GetRealSpeed() == 2)  // Speed 200%
                     nFrameDelay = 1000 / 25 / 2 - 1;
@@ -173,7 +174,8 @@ BOOL InitInstance(HINSTANCE /*hInstance*/, int /*nCmdShow*/)
 
     ParseCommandLine();  // Override settings by command-line option if needed
 
-    if (!Emulator_Init()) return FALSE;
+    if (!Emulator_Init())
+        return FALSE;
     Emulator_SetSound(Settings_GetSound());
     Emulator_SetSpeed(Settings_GetRealSpeed());
 
@@ -200,16 +202,39 @@ void ParseCommandLine()
     int argnum = 0;
     LPTSTR* args = CommandLineToArgvW(commandline, &argnum);
 
-    if (argnum <= 1)
-        return;
-
     for (int curargn = 1; curargn < argnum; curargn++)
     {
         LPTSTR arg = args[curargn];
-        if (_tcscmp(arg, _T("/boot")) == 0)
+
+        if (_tcslen(arg) >= 5 && _tcsncmp(arg, _T("/boot"), 5) == 0)
         {
-            //TODO: Check if we have Floppy0 image assigned
-            Option_AutoBoot = TRUE;
+            Option_AutoBoot = 1;
+            if (_tcslen(arg) >= 6 && arg[5] >= _T('1') && arg[5] <= _T('7'))
+                Option_AutoBoot = arg[5] - _T('0');
+        }
+        else if (_tcscmp(arg, _T("/autostart")) == 0 || _tcscmp(arg, _T("/autostarton")) == 0)
+        {
+            Settings_SetAutostart(TRUE);
+        }
+        else if (_tcscmp(arg, _T("/autostartoff")) == 0 || _tcscmp(arg, _T("/noautostart")) == 0)
+        {
+            Settings_SetAutostart(FALSE);
+        }
+        else if (_tcscmp(arg, _T("/debug")) == 0 || _tcscmp(arg, _T("/debugon")) == 0 || _tcscmp(arg, _T("/debugger")) == 0)
+        {
+            Settings_SetDebug(TRUE);
+        }
+        else if (_tcscmp(arg, _T("/debugoff")) == 0 || _tcscmp(arg, _T("/nodebug")) == 0)
+        {
+            Settings_SetDebug(FALSE);
+        }
+        else if (_tcscmp(arg, _T("/sound")) == 0 || _tcscmp(arg, _T("/soundon")) == 0)
+        {
+            Settings_SetSound(TRUE);
+        }
+        else if (_tcscmp(arg, _T("/soundoff")) == 0 || _tcscmp(arg, _T("/nosound")) == 0)
+        {
+            Settings_SetSound(FALSE);
         }
     }
 

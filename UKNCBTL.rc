@@ -89,6 +89,7 @@ BEGIN
         MENUITEM MFT_SEPARATOR
         MENUITEM "Screenshot",                  ID_FILE_SCREENSHOT,MFT_STRING,MFS_ENABLED
         MENUITEM "Save Screenshot as...",       ID_FILE_SAVESCREENSHOTAS,MFT_STRING,MFS_ENABLED
+        MENUITEM "Screen Text to Clipboard",    ID_FILE_SCREENTOCLIPBOARD,MFT_STRING,MFS_ENABLED
         MENUITEM MFT_SEPARATOR
         MENUITEM "Create Disk...",              ID_FILE_CREATEDISK,MFT_STRING,MFS_ENABLED
         MENUITEM "Settings",                    ID_FILE_SETTINGS,MFT_STRING,MFS_ENABLED
@@ -118,6 +119,8 @@ BEGIN
         MENUITEM "Autostart",                   ID_EMULATOR_AUTOSTART,MFT_STRING,MFS_ENABLED
         MENUITEM MFT_SEPARATOR
         MENUITEM "Sound",                       ID_EMULATOR_SOUND,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "Speed 25%",                   ID_EMULATOR_SPEED25
         MENUITEM "Speed 50%",                   ID_EMULATOR_SPEED50,MFT_STRING,MFS_ENABLED
         MENUITEM "Speed 100%",                  ID_EMULATOR_REALSPEED,MFT_STRING,MFS_ENABLED
         MENUITEM "Speed 200%",                  ID_EMULATOR_SPEED200,MFT_STRING,MFS_ENABLED
@@ -183,7 +186,7 @@ CAPTION "About"
 FONT 8, "MS Shell Dlg", 400, 0, 0xCC
 BEGIN
     LTEXT           "UKNCBTL Version 1.0",IDC_STATIC,10,10,119,8,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2007-2018",IDC_STATIC,10,20,119,8
+    LTEXT           "Copyright (C) 2007-2019",IDC_STATIC,10,20,119,8
     DEFPUSHBUTTON   "OK",IDOK,211,10,57,15,WS_GROUP
     LTEXT           "Authors:\r\nNikita Zimin (nzeemin@gmail.com)\r\nFelix Lazarev (felix.lazarev@gmail.com)\r\nAlexey Kisly",IDC_STATIC,10,57,174,36
     LTEXT           "Special thanks to:\r\nArseny Gordin",IDC_STATIC,10,93,174,22

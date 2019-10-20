@@ -38,6 +38,10 @@ BOOL AssertFailedLine(LPCSTR lpszFileName, int nLine)
     return FALSE;
 }
 
+void AlertInfo(LPCTSTR sMessage)
+{
+    ::MessageBox(NULL, sMessage, g_szTitle, MB_OK | MB_ICONINFORMATION | MB_TOPMOST);
+}
 void AlertWarning(LPCTSTR sMessage)
 {
     ::MessageBox(NULL, sMessage, g_szTitle, MB_OK | MB_ICONEXCLAMATION | MB_TOPMOST);
@@ -164,7 +168,7 @@ const TCHAR* REGISTER_NAME[] = { _T("R0"), _T("R1"), _T("R2"), _T("R3"), _T("R4"
 
 HFONT CreateMonospacedFont()
 {
-    HFONT font = NULL;
+    HFONT font;
     LOGFONT logfont;  memset(&logfont, 0, sizeof(logfont));
     logfont.lfHeight = 12;
     logfont.lfWeight = FW_NORMAL;
@@ -194,8 +198,8 @@ HFONT CreateMonospacedFont()
 
 HFONT CreateDialogFont()
 {
-    HFONT font = NULL;
-    font = CreateFont(14, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+    HFONT font = CreateFont(
+            14, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
             DEFAULT_CHARSET,
             OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
             VARIABLE_PITCH,
@@ -292,8 +296,8 @@ void DrawBinaryValue(HDC hdc, int x, int y, WORD value)
 // KOI8-R (Russian) to Unicode conversion table
 const TCHAR KOI8R_CODES[] =
 {
-    0x2500, 0x2502, 0x250C, 0x2510, 0x2514, 0x2518, 0x251C, 0x2524, 0x252C, 0x2534, 0x253C, 0x2580, 0x2584, 0x2588, 0x258C, 0x2590,
-    0x2591, 0x2592, 0x2593, 0x2320, 0x25A0, 0x2219, 0x221A, 0x2248, 0x2264, 0x2265, 0xA0,   0x2321, 0xB0,   0xB2,   0xB7,   0xF7,
+    0x2191, 0x2193, 0x2190, 0x2192, 0x2514, 0x2518, 0x251C, 0x2524, 0x252C, 0x2534, 0x253C, 0x2580, 0x2584, 0x2588, 0x258C, 0x2590,
+    0x00D7, 0x00F7, 0x2593, 0x2320, 0x21B2, 0x2219, 0x221A, 0x2248, 0x2264, 0x2265, 0xA0,   0x2321, 0xB0,   0xB2,   0xB7,   0xF7,
     0x2550, 0x2551, 0x2552, _T('¸'), 0x2553, 0x2554, 0x2555, 0x2556, 0x2557, 0x2558, 0x2559, 0x255A, 0x255B, 0x255C, 0x255D, 0x255E,
     0x255F, 0x2560, 0x2561, _T('¨'), 0x2562, 0x2563, 0x2564, 0x2565, 0x2566, 0x2567, 0x2568, 0x2569, 0x256A, 0x256B, 0x256C, 0xA9,
     _T('þ'), _T('à'), _T('á'), _T('ö'), _T('ä'), _T('å'), _T('ô'), _T('ã'), _T('õ'), _T('è'), _T('é'), _T('ê'), _T('ë'), _T('ì'), _T('í'), _T('î'),

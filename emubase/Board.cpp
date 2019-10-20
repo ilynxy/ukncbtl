@@ -169,16 +169,16 @@ CMotherboard::CMotherboard ()
     memset(m_chanppurx, 0, sizeof(m_chanppurx));
 
     m_dwTrace = TRACE_NONE;
-    m_TapeReadCallback = NULL;
-    m_TapeWriteCallback = NULL;
+    m_TapeReadCallback = nullptr;
+    m_TapeWriteCallback = nullptr;
     m_nTapeSampleRate = 0;
-    m_SoundGenCallback = NULL;
-    m_SerialInCallback = NULL;
-    m_SerialOutCallback = NULL;
-    m_ParallelOutCallback = NULL;
-    m_NetworkInCallback = NULL;
-    m_NetworkOutCallback = NULL;
-    m_TerminalOutCallback = NULL;
+    m_SoundGenCallback = nullptr;
+    m_SerialInCallback = nullptr;
+    m_SerialOutCallback = nullptr;
+    m_ParallelOutCallback = nullptr;
+    m_NetworkInCallback = nullptr;
+    m_NetworkOutCallback = nullptr;
+    m_TerminalOutCallback = nullptr;
 
     // Create devices
     m_pCPU = new CProcessor(_T("CPU"));
@@ -194,24 +194,24 @@ CMotherboard::CMotherboard ()
     m_pSecondMemCtl->Attach(this, m_pPPU);
 
     // Allocate memory for RAM and ROM
-    m_pRAM[0] = (uint8_t*) calloc(65536, 1);
-    m_pRAM[1] = (uint8_t*) calloc(65536, 1);
-    m_pRAM[2] = (uint8_t*) calloc(65536, 1);
-    m_pROM    = (uint8_t*) calloc(32768, 1);
-    m_pROMCart[0] = NULL;
-    m_pROMCart[1] = NULL;
-    m_pHardDrives[0] = NULL;
-    m_pHardDrives[1] = NULL;
+    m_pRAM[0] = static_cast<uint8_t*>(calloc(65536, 1));
+    m_pRAM[1] = static_cast<uint8_t*>(calloc(65536, 1));
+    m_pRAM[2] = static_cast<uint8_t*>(calloc(65536, 1));
+    m_pROM    = static_cast<uint8_t*>(calloc(32768, 1));
+    m_pROMCart[0] = nullptr;
+    m_pROMCart[1] = nullptr;
+    m_pHardDrives[0] = nullptr;
+    m_pHardDrives[1] = nullptr;
 
     // Prepare bus devices
-    m_pCpuDevices = (CBusDevice**) calloc(6, sizeof(CBusDevice*));
+    m_pCpuDevices = static_cast<CBusDevice**>(calloc(6, sizeof(CBusDevice*)));
     m_pCpuDevices[0] = new CBusDeviceProcessorTimer();
     m_pCpuDevices[1] = new CBusDeviceCpuChannels();
     m_pCpuDevices[2] = new CBusDeviceNetworkAdapter();
     m_pCpuDevices[3] = new CBusDeviceSerialPort();
     m_pCpuDevices[4] = new CBusDeviceCpuMemoryAccess();
-    m_pCpuDevices[5] = NULL;
-    m_pPpuDevices = (CBusDevice**) calloc(8, sizeof(CBusDevice*));
+    m_pCpuDevices[5] = nullptr;
+    m_pPpuDevices = static_cast<CBusDevice**>(calloc(8, sizeof(CBusDevice*)));
     m_pPpuDevices[0] = new CBusDeviceProcessorTimer();
     m_pPpuDevices[1] = new CBusDevicePpuChannels();
     m_pPpuDevices[2] = new CBusDevicePpuMemoryAccess();
@@ -219,7 +219,7 @@ CMotherboard::CMotherboard ()
     m_pPpuDevices[4] = new CBusDeviceKeyboard();
     m_pPpuDevices[5] = new CBusDeviceFloppyController();
     m_pPpuDevices[6] = new CBusDeviceHardDrive();
-    m_pPpuDevices[7] = NULL;
+    m_pPpuDevices[7] = nullptr;
 
     m_pFirstMemCtl->AttachDevices((const CBusDevice**)m_pCpuDevices);
     m_pSecondMemCtl->AttachDevices((const CBusDevice**)m_pPpuDevices);
@@ -229,18 +229,18 @@ CMotherboard::~CMotherboard ()
 {
     // Delete bus devices
     CBusDevice** ppDevice = m_pCpuDevices;
-    while (*ppDevice != NULL)
+    while (*ppDevice != nullptr)
     {
         delete *ppDevice;
-        *ppDevice = NULL;
+        *ppDevice = nullptr;
         ppDevice++;
     }
     free(m_pCpuDevices);
     ppDevice = m_pPpuDevices;
-    while (*ppDevice != NULL)
+    while (*ppDevice != nullptr)
     {
         delete *ppDevice;
-        *ppDevice = NULL;
+        *ppDevice = nullptr;
         ppDevice++;
     }
     free(m_pPpuDevices);
@@ -257,16 +257,16 @@ CMotherboard::~CMotherboard ()
     free(m_pRAM[1]);
     free(m_pRAM[2]);
     free(m_pROM);
-    if (m_pROMCart[0] != NULL) free(m_pROMCart[0]);
-    if (m_pROMCart[1] != NULL) free(m_pROMCart[1]);
-    if (m_pHardDrives[0] != NULL) delete m_pHardDrives[0];
-    if (m_pHardDrives[1] != NULL) delete m_pHardDrives[1];
+    if (m_pROMCart[0] != nullptr) free(m_pROMCart[0]);
+    if (m_pROMCart[1] != nullptr) free(m_pROMCart[1]);
+    if (m_pHardDrives[0] != nullptr) delete m_pHardDrives[0];
+    if (m_pHardDrives[1] != nullptr) delete m_pHardDrives[1];
 }
 
 void CMotherboard::SetTrace(uint32_t dwTrace)
 {
     m_dwTrace = dwTrace;
-    if (m_pFloppyCtl != NULL)
+    if (m_pFloppyCtl != nullptr)
         m_pFloppyCtl->SetTrace(dwTrace & TRACE_FLOPPY);
 }
 
@@ -277,9 +277,9 @@ void CMotherboard::Reset ()
 
     ResetFloppy();
 
-    if (m_pHardDrives[0] != NULL)
+    if (m_pHardDrives[0] != nullptr)
         m_pHardDrives[0]->Reset();
-    if (m_pHardDrives[1] != NULL)
+    if (m_pHardDrives[1] != nullptr)
         m_pHardDrives[1]->Reset();
 
     m_cputicks = 0;
@@ -312,11 +312,11 @@ void CMotherboard::LoadROM(const uint8_t* pBuffer)  // Load 32 KB ROM image from
 void CMotherboard::LoadROMCartridge(int cartno, const uint8_t* pBuffer)  // Load 24 KB ROM cartridge image
 {
     ASSERT(cartno == 1 || cartno == 2);  // Only two cartridges, #1 and #2
-    ASSERT(pBuffer != NULL);
+    ASSERT(pBuffer != nullptr);
 
     int cartindex = cartno - 1;
-    if (m_pROMCart[cartindex] == NULL)
-        m_pROMCart[cartindex] = (uint8_t*) calloc(24 * 1024, 1);
+    if (m_pROMCart[cartindex] == nullptr)
+        m_pROMCart[cartindex] = static_cast<uint8_t*>(calloc(24 * 1024, 1));
 
     memcpy(m_pROMCart[cartindex], pBuffer, 24 * 1024);
 }
@@ -372,17 +372,17 @@ bool CMotherboard::IsROMCartridgeLoaded(int cartno) const
 {
     ASSERT(cartno == 1 || cartno == 2);  // Only two cartridges, #1 and #2
     int cartindex = cartno - 1;
-    return (m_pROMCart[cartindex] != NULL);
+    return (m_pROMCart[cartindex] != nullptr);
 }
 
 void CMotherboard::UnloadROMCartridge(int cartno)
 {
     ASSERT(cartno == 1 || cartno == 2);  // Only two cartridges, #1 and #2
     int cartindex = cartno - 1;
-    if (m_pROMCart[cartindex] != NULL)
+    if (m_pROMCart[cartindex] != nullptr)
     {
         free(m_pROMCart[cartindex]);
-        m_pROMCart[cartindex] = NULL;
+        m_pROMCart[cartindex] = nullptr;
     }
 }
 
@@ -392,14 +392,14 @@ void CMotherboard::UnloadROMCartridge(int cartno)
 bool CMotherboard::IsHardImageAttached(int slot) const
 {
     ASSERT(slot >= 1 && slot <= 2);
-    return (m_pHardDrives[slot - 1] != NULL);
+    return (m_pHardDrives[slot - 1] != nullptr);
 }
 
 bool CMotherboard::IsHardImageReadOnly(int slot) const
 {
     ASSERT(slot >= 1 && slot <= 2);
     CHardDrive* pHardDrive = m_pHardDrives[slot - 1];
-    if (pHardDrive == NULL) return false;
+    if (pHardDrive == nullptr) return false;
     return pHardDrive->IsReadOnly();
 }
 
@@ -422,14 +422,14 @@ void CMotherboard::DetachHardImage(int slot)
     ASSERT(slot >= 1 && slot <= 2);
 
     delete m_pHardDrives[slot - 1];
-    m_pHardDrives[slot - 1] = NULL;
+    m_pHardDrives[slot - 1] = nullptr;
 }
 
 uint16_t CMotherboard::GetHardPortWord(int slot, uint16_t port)
 {
     ASSERT(slot >= 1 && slot <= 2);
 
-    if (m_pHardDrives[slot - 1] == NULL) return 0;
+    if (m_pHardDrives[slot - 1] == nullptr) return 0;
     port = (uint16_t) (~(port >> 1) & 7) | 0x1f0;
     uint16_t data = m_pHardDrives[slot - 1]->ReadPort(port);
     return ~data;  // QBUS inverts the bits
@@ -438,7 +438,7 @@ void CMotherboard::SetHardPortWord(int slot, uint16_t port, uint16_t data)
 {
     ASSERT(slot >= 1 && slot <= 2);
 
-    if (m_pHardDrives[slot - 1] == NULL) return;
+    if (m_pHardDrives[slot - 1] == nullptr) return;
     port = (uint16_t) (~(port >> 1) & 7) | 0x1f0;
     data = ~data;  // QBUS inverts the bits
     m_pHardDrives[slot - 1]->WritePort(port, data);
@@ -463,7 +463,7 @@ uint16_t CMotherboard::GetROMCartWord(int cartno, uint16_t offset) const
     ASSERT(cartno == 1 || cartno == 2);
     ASSERT(offset < 24 * 1024 - 1);
     int cartindex = cartno - 1;
-    if (m_pROMCart[cartindex] == NULL)
+    if (m_pROMCart[cartindex] == nullptr)
         return 0177777;
     uint16_t* p = (uint16_t*) (m_pROMCart[cartindex] + (offset & 0xFFFE));
     return *p;
@@ -473,7 +473,7 @@ uint8_t CMotherboard::GetROMCartByte(int cartno, uint16_t offset) const
     ASSERT(cartno == 1 || cartno == 2);
     ASSERT(offset < 24 * 1024);
     int cartindex = cartno - 1;
-    if (m_pROMCart[cartindex] == NULL)
+    if (m_pROMCart[cartindex] == nullptr)
         return 0377;
     uint8_t* p = m_pROMCart[cartindex] + offset;
     return *p;
@@ -672,7 +672,7 @@ bool CMotherboard::SystemFrame()
     int networkTxCount = 0;
 
     int tapeSamplesPerFrame = 1, tapeBrasErr = 0;
-    if (m_TapeReadCallback != NULL || m_TapeWriteCallback != NULL)
+    if (m_TapeReadCallback != nullptr || m_TapeWriteCallback != nullptr)
     {
         tapeSamplesPerFrame = m_nTapeSampleRate / 25;
         tapeBrasErr = 0;
@@ -688,35 +688,35 @@ bool CMotherboard::SystemFrame()
         // CPU - 16 times, PPU - 12.5 times
         if (m_CPUbp == 0177777 && m_PPUbp == 0177777)  // No breakpoints, no need to check
         {
-            /*  0 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;  SYSTEMFRAME_EXECUTE_CPU;
+            /*  0 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;
             /*  1 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;
-            /*  2 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;
-            /*  3 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;  SYSTEMFRAME_EXECUTE_CPU;
+            /*  2 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;  SYSTEMFRAME_EXECUTE_CPU;
+            /*  3 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;
             /*  4 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;
-            /*  5 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;
-            /*  6 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;  SYSTEMFRAME_EXECUTE_CPU;
+            /*  5 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;  SYSTEMFRAME_EXECUTE_CPU;
+            /*  6 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;
             /*  7 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;
-            /*  8 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;
-            /*  9 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;  SYSTEMFRAME_EXECUTE_CPU;
+            /*  8 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;  SYSTEMFRAME_EXECUTE_CPU;
+            /*  9 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;
             /* 10 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;
-            /* 11 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;
+            /* 11 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;  SYSTEMFRAME_EXECUTE_CPU;
             if ((frameticks & 1) == 0)  // (frameticks % 2 == 0) PPU extra ticks
                 SYSTEMFRAME_EXECUTE_PPU;
         }
         else  // Have breakpoint, need to check
         {
-            /*  0 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;  SYSTEMFRAME_EXECUTE_BP_CPU;
+            /*  0 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;
             /*  1 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;
-            /*  2 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;
-            /*  3 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;  SYSTEMFRAME_EXECUTE_BP_CPU;
+            /*  2 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;  SYSTEMFRAME_EXECUTE_BP_CPU;
+            /*  3 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;
             /*  4 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;
-            /*  5 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;
-            /*  6 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;  SYSTEMFRAME_EXECUTE_BP_CPU;
+            /*  5 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;  SYSTEMFRAME_EXECUTE_BP_CPU;
+            /*  6 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;
             /*  7 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;
-            /*  8 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;
-            /*  9 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;  SYSTEMFRAME_EXECUTE_BP_CPU;
+            /*  8 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;  SYSTEMFRAME_EXECUTE_BP_CPU;
+            /*  9 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;
             /* 10 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;
-            /* 11 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;
+            /* 11 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;  SYSTEMFRAME_EXECUTE_BP_CPU;
             if ((frameticks & 1) == 0)  // (frameticks % 2 == 0) PPU extra ticks
                 SYSTEMFRAME_EXECUTE_BP_PPU;
         }
@@ -758,22 +758,22 @@ bool CMotherboard::SystemFrame()
             }
         }
 
-        if (m_pHardDrives[0] != NULL)
+        if (m_pHardDrives[0] != nullptr)
             m_pHardDrives[0]->Periodic();
-        if (m_pHardDrives[1] != NULL)
+        if (m_pHardDrives[1] != nullptr)
             m_pHardDrives[1]->Periodic();
 
         if (frameticks % audioticks == 0) //AUDIO tick
             DoSound();
 
-        if (m_TapeReadCallback != NULL || m_TapeWriteCallback != NULL)
+        if (m_TapeReadCallback != nullptr || m_TapeWriteCallback != nullptr)
         {
             tapeBrasErr += tapeSamplesPerFrame;
             if (2 * tapeBrasErr >= 20000)
             {
                 tapeBrasErr -= 20000;
 
-                if (m_TapeReadCallback != NULL)  // Tape reading
+                if (m_TapeReadCallback != nullptr)  // Tape reading
                 {
                     bool tapeBit = (*m_TapeReadCallback)(1);
                     CSecondMemoryController* pMemCtl = static_cast<CSecondMemoryController*>(m_pSecondMemCtl);
@@ -782,7 +782,7 @@ bool CMotherboard::SystemFrame()
                         m_timerflags |= 040;  // Set bit 5 of timer state: external event ready to read
                     }
                 }
-                else if (m_TapeWriteCallback != NULL)  // Tape writing
+                else if (m_TapeWriteCallback != nullptr)  // Tape writing
                 {
                     CSecondMemoryController* pMemCtl = static_cast<CSecondMemoryController*>(m_pSecondMemCtl);
                     unsigned int value = pMemCtl->TapeOutput() ? 0xffffffff : 0;
@@ -791,7 +791,7 @@ bool CMotherboard::SystemFrame()
             }
         }
 
-        if (m_SerialInCallback != NULL && frameticks % 416 == 0)
+        if (m_SerialInCallback != nullptr && frameticks % 416 == 0)
         {
             CFirstMemoryController* pMemCtl = static_cast<CFirstMemoryController*>(m_pFirstMemCtl);
             if ((pMemCtl->m_Port176574 & 004) == 0)  // Not loopback?
@@ -804,7 +804,7 @@ bool CMotherboard::SystemFrame()
                 }
             }
         }
-        if (m_SerialOutCallback != NULL && frameticks % serialOutTicks == 0)
+        if (m_SerialOutCallback != nullptr && frameticks % serialOutTicks == 0)
         {
             CFirstMemoryController* pMemCtl = static_cast<CFirstMemoryController*>(m_pFirstMemCtl);
             if (serialTxCount > 0)
@@ -830,7 +830,7 @@ bool CMotherboard::SystemFrame()
             }
         }
 
-        if (m_NetworkInCallback != NULL && frameticks % 64 == 0)
+        if (m_NetworkInCallback != nullptr && frameticks % 64 == 0)
         {
             CFirstMemoryController* pMemCtl = static_cast<CFirstMemoryController*>(m_pFirstMemCtl);
             if ((pMemCtl->m_Port176564 & 004) == 0)  // Not loopback?
@@ -846,7 +846,7 @@ bool CMotherboard::SystemFrame()
                 }
             }
         }
-        if (m_NetworkOutCallback != NULL && frameticks % networkOutTicks == 0)
+        if (m_NetworkOutCallback != nullptr && frameticks % networkOutTicks == 0)
         {
             CFirstMemoryController* pMemCtl = static_cast<CFirstMemoryController*>(m_pFirstMemCtl);
             if (networkTxCount > 0)
@@ -875,7 +875,7 @@ bool CMotherboard::SystemFrame()
             }
         }
 
-        if (m_ParallelOutCallback != NULL)
+        if (m_ParallelOutCallback != nullptr)
         {
             CSecondMemoryController* pMemCtl = static_cast<CSecondMemoryController*>(m_pSecondMemCtl);
             if ((pMemCtl->m_Port177102 & 0x80) == 0x80 && (pMemCtl->m_Port177101 & 0x80) == 0x80)
@@ -1053,7 +1053,7 @@ void CMotherboard::ChanWriteByCPU(uint8_t chan, uint8_t data)
         m_pPPU->InterruptVIRQ(5 + chan * 2, 0320 + (010 * chan));
     }
 
-    if (chan == 0 && m_TerminalOutCallback != NULL)
+    if (chan == 0 && m_TerminalOutCallback != nullptr)
         m_TerminalOutCallback(data);
 }
 void CMotherboard::ChanWriteByPPU(uint8_t chan, uint8_t data)
@@ -1172,7 +1172,7 @@ void CMotherboard::ChanRxStateSetCPU(uint8_t chan, uint8_t state)
     else
     {
         m_chancpurx[chan].irq = 0;
-        if ((chan == 0) || (m_pCPU->GetVIRQ(chan ? 3 : 1))) m_chancpurx[chan].rdwr = 1;
+        if ((chan == 0) || (m_pCPU->GetVIRQ(3))) m_chancpurx[chan].rdwr = 1;
         m_pCPU->InterruptVIRQ(chan ? 3 : 1, 0);
     }
     if ((m_chancpurx[chan].irq) && (m_chancpurx[chan].ready) && (oldc_irq == 0) && (m_chancpurx[chan].rdwr))
@@ -1256,7 +1256,6 @@ void CMotherboard::ChanRxStateSetPPU(uint8_t state)
         m_chanppurx[2].rdwr = 0;
         m_pPPU->InterruptVIRQ(9, 0340);
     }
-
 }
 void CMotherboard::ChanTxStateSetPPU(uint8_t state)
 {
@@ -1397,82 +1396,6 @@ void CMotherboard::ChanResetByPPU()
     m_pPPU->InterruptVIRQ(4, 0);
 }
 
-//void CMotherboard::FloppyDebug(uint8_t val)
-//{
-////#if !defined(PRODUCT)
-////    TCHAR buffer[512];
-////#endif
-///*
-//m_floppyaddr=0;
-//m_floppystate=FLOPPY_FSM_WAITFORLSB;
-//#define FLOPPY_FSM_WAITFORLSB	0
-//#define FLOPPY_FSM_WAITFORMSB	1
-//#define FLOPPY_FSM_WAITFORTERM1	2
-//#define FLOPPY_FSM_WAITFORTERM2	3
-//
-//*/
-//	switch(m_floppystate)
-//	{
-//		case FLOPPY_FSM_WAITFORLSB:
-//			if(val!=0xff)
-//			{
-//				m_floppyaddr=val;
-//				m_floppystate=FLOPPY_FSM_WAITFORMSB;
-//			}
-//			break;
-//		case FLOPPY_FSM_WAITFORMSB:
-//			if(val!=0xff)
-//			{
-//				m_floppyaddr|=val<<8;
-//				m_floppystate=FLOPPY_FSM_WAITFORTERM1;
-//			}
-//			else
-//			{
-//				m_floppystate=FLOPPY_FSM_WAITFORLSB;
-//			}
-//			break;
-//		case FLOPPY_FSM_WAITFORTERM1:
-//			if(val==0xff)
-//			{ //done
-//				uint16_t par;
-//				uint8_t trk,sector,side;
-//
-//				par=m_pFirstMemCtl->GetWord(m_floppyaddr,0);
-//
-////#if !defined(PRODUCT)
-////				wsprintf(buffer,_T(">>>>FDD Cmd %d "),(par>>8)&0xff);
-////				DebugPrint(buffer);
-////#endif
-//                par=m_pFirstMemCtl->GetWord(m_floppyaddr+2,0);
-//				side=par&0x8000?1:0;
-////#if !defined(PRODUCT)
-////				wsprintf(buffer,_T("Side %d Drv %d, Type %d "),par&0x8000?1:0,(par>>8)&0x7f,par&0xff);
-////				DebugPrint(buffer);
-////#endif
-//				par=m_pFirstMemCtl->GetWord(m_floppyaddr+4,0);
-//				sector=(par>>8)&0xff;
-//				trk=par&0xff;
-////#if !defined(PRODUCT)
-////				wsprintf(buffer,_T("Sect %d, Trk %d "),(par>>8)&0xff,par&0xff);
-////				DebugPrint(buffer);
-////				PrintOctalValue(buffer,m_pFirstMemCtl->GetWord(m_floppyaddr+6,0));
-////				DebugPrint(_T("Addr "));
-////				DebugPrint(buffer);
-////#endif
-//				par=m_pFirstMemCtl->GetWord(m_floppyaddr+8,0);
-////#if !defined(PRODUCT)
-////				wsprintf(buffer,_T(" Block %d Len %d\n"),trk*20+side*10+sector-1,par);
-////				DebugPrint(buffer);
-////#endif
-//
-//				m_floppystate=FLOPPY_FSM_WAITFORLSB;
-//			}
-//			break;
-//
-//	}
-//}
-
-
 uint16_t CMotherboard::GetFloppyState()
 {
     return m_pFloppyCtl->GetState();
@@ -1530,7 +1453,6 @@ void CMotherboard::DoSound(void)
         freq_out[0] = 0;
 
     freq_out[1] = (m_timer >> 6) & 1; //1000
-
     freq_out[2] = (m_timer >> 7) & 1; //500
     freq_out[3] = (m_timer >> 8) & 1; //250
     freq_out[4] = (m_timer >> 10) & 1; //60
@@ -1544,13 +1466,12 @@ void CMotherboard::DoSound(void)
             global = 1;
     }
 
-    if (m_SoundGenCallback != NULL)
-    {
-        if (global)
-            (*m_SoundGenCallback)(0x7fff, 0x7fff);
-        else
-            (*m_SoundGenCallback)(0x0000, 0x0000);
-    }
+    if (m_SoundGenCallback == NULL)
+        return;
+
+    uint8_t value = global ? 0xff : 0;
+    uint16_t value16 = value << 7;
+    (*m_SoundGenCallback)(value16, value16);
 }
 
 void CMotherboard::SetSound(uint16_t val)
@@ -1589,39 +1510,39 @@ void CMotherboard::SetSound(uint16_t val)
 
 void CMotherboard::SetTapeReadCallback(TAPEREADCALLBACK callback, int sampleRate)
 {
-    if (callback == NULL)  // Reset callback
+    if (callback == nullptr)  // Reset callback
     {
-        m_TapeReadCallback = NULL;
+        m_TapeReadCallback = nullptr;
         m_nTapeSampleRate = 0;
     }
     else
     {
         m_TapeReadCallback = callback;
         m_nTapeSampleRate = sampleRate;
-        m_TapeWriteCallback = NULL;
+        m_TapeWriteCallback = nullptr;
     }
 }
 
 void CMotherboard::SetTapeWriteCallback(TAPEWRITECALLBACK callback, int sampleRate)
 {
-    if (callback == NULL)  // Reset callback
+    if (callback == nullptr)  // Reset callback
     {
-        m_TapeWriteCallback = NULL;
+        m_TapeWriteCallback = nullptr;
         m_nTapeSampleRate = 0;
     }
     else
     {
         m_TapeWriteCallback = callback;
         m_nTapeSampleRate = sampleRate;
-        m_TapeReadCallback = NULL;
+        m_TapeReadCallback = nullptr;
     }
 }
 
 void CMotherboard::SetSoundGenCallback(SOUNDGENCALLBACK callback)
 {
-    if (callback == NULL)  // Reset callback
+    if (callback == nullptr)  // Reset callback
     {
-        m_SoundGenCallback = NULL;
+        m_SoundGenCallback = nullptr;
     }
     else
     {
@@ -1631,10 +1552,10 @@ void CMotherboard::SetSoundGenCallback(SOUNDGENCALLBACK callback)
 
 void CMotherboard::SetSerialCallbacks(SERIALINCALLBACK incallback, SERIALOUTCALLBACK outcallback)
 {
-    if (incallback == NULL || outcallback == NULL)  // Reset callbacks
+    if (incallback == nullptr || outcallback == nullptr)  // Reset callbacks
     {
-        m_SerialInCallback = NULL;
-        m_SerialOutCallback = NULL;
+        m_SerialInCallback = nullptr;
+        m_SerialOutCallback = nullptr;
         //TODO: Set port value to indicate we are not ready to translate
     }
     else
@@ -1648,10 +1569,10 @@ void CMotherboard::SetSerialCallbacks(SERIALINCALLBACK incallback, SERIALOUTCALL
 void CMotherboard::SetParallelOutCallback(PARALLELOUTCALLBACK outcallback)
 {
     CSecondMemoryController* pMemCtl = static_cast<CSecondMemoryController*>(m_pSecondMemCtl);
-    if (outcallback == NULL)  // Reset callback
+    if (outcallback == nullptr)  // Reset callback
     {
         pMemCtl->m_Port177101 &= ~2;  // Reset OnLine flag
-        m_ParallelOutCallback = NULL;
+        m_ParallelOutCallback = nullptr;
     }
     else
     {
@@ -1662,10 +1583,10 @@ void CMotherboard::SetParallelOutCallback(PARALLELOUTCALLBACK outcallback)
 
 void CMotherboard::SetNetworkCallbacks(NETWORKINCALLBACK incallback, NETWORKOUTCALLBACK outcallback)
 {
-    if (incallback == NULL || outcallback == NULL)  // Reset callbacks
+    if (incallback == nullptr || outcallback == nullptr)  // Reset callbacks
     {
-        m_NetworkInCallback = NULL;
-        m_NetworkOutCallback = NULL;
+        m_NetworkInCallback = nullptr;
+        m_NetworkOutCallback = nullptr;
         //TODO: Set port value to indicate we are not ready to translate
     }
     else
@@ -1675,6 +1596,38 @@ void CMotherboard::SetNetworkCallbacks(NETWORKINCALLBACK incallback, NETWORKOUTC
         //TODO: Set port value to indicate we are ready to translate
     }
 }
+
+
+//////////////////////////////////////////////////////////////////////
+
+#if !defined(PRODUCT)
+
+void TraceInstruction(CProcessor* pProc, CMotherboard* /*pBoard*/)
+{
+    uint16_t address = pProc->GetPC();
+    bool okHaltMode = pProc->IsHaltMode();
+    CMemoryController* pMemCtl = pProc->GetMemoryController();
+
+    uint16_t memory[4];
+    int addrtype = 0;
+    memory[0] = pMemCtl->GetWordView(address + 0 * 2, okHaltMode, true, &addrtype);
+    memory[1] = pMemCtl->GetWordView(address + 1 * 2, okHaltMode, true, &addrtype);
+    memory[2] = pMemCtl->GetWordView(address + 2 * 2, okHaltMode, true, &addrtype);
+    memory[3] = pMemCtl->GetWordView(address + 3 * 2, okHaltMode, true, &addrtype);
+
+    TCHAR bufaddr[7];
+    PrintOctalValue(bufaddr, address);
+
+    TCHAR instr[8];
+    TCHAR args[32];
+    DisassembleInstruction(memory, address, instr, args);
+    TCHAR buffer[64];
+    _sntprintf(buffer, 64, _T("%s\t%s\t%s\r\n"), bufaddr, instr, args);
+
+    DebugLog(buffer);
+}
+
+#endif
 
 
 //////////////////////////////////////////////////////////////////////

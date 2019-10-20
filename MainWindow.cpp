@@ -74,6 +74,7 @@ void MainWindow_DoEmulatorCartridge(int slot);
 void MainWindow_DoEmulatorHardDrive(int slot);
 void MainWindow_DoFileScreenshot();
 void MainWindow_DoFileScreenshotSaveAs();
+void MainWindow_DoFileScreenToClipboard();
 void MainWindow_DoFileCreateDisk();
 void MainWindow_DoFileSettings();
 void MainWindow_DoEmulatorConfiguration();
@@ -204,40 +205,40 @@ BOOL MainWindow_InitToolbar()
         buttons[i].iString = -1;
     }
     buttons[0].idCommand = ID_EMULATOR_RUN;
-    buttons[0].iBitmap = 0;
+    buttons[0].iBitmap = ToolbarImageRun;
     buttons[0].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
     buttons[0].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Run"));
     buttons[1].idCommand = ID_EMULATOR_RESET;
-    buttons[1].iBitmap = 2;
+    buttons[1].iBitmap = ToolbarImageReset;
     buttons[1].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
     buttons[1].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Reset"));
     buttons[2].fsStyle = BTNS_SEP;
     buttons[3].idCommand = ID_EMULATOR_FLOPPY0;
-    buttons[3].iBitmap = 4;
+    buttons[3].iBitmap = ToolbarImageFloppySlot;
     buttons[3].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
     buttons[3].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("0"));
     buttons[4].idCommand = ID_EMULATOR_FLOPPY1;
-    buttons[4].iBitmap = 4;
+    buttons[4].iBitmap = ToolbarImageFloppySlot;
     buttons[4].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
     buttons[4].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("1"));
     buttons[5].idCommand = ID_EMULATOR_FLOPPY2;
-    buttons[5].iBitmap = 4;
+    buttons[5].iBitmap = ToolbarImageFloppySlot;
     buttons[5].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
     buttons[5].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("2"));
     buttons[6].idCommand = ID_EMULATOR_FLOPPY3;
-    buttons[6].iBitmap = 4;
+    buttons[6].iBitmap = ToolbarImageFloppySlot;
     buttons[6].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
     buttons[6].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("3"));
     buttons[7].fsStyle = BTNS_SEP;
     buttons[8].idCommand = ID_EMULATOR_CARTRIDGE1;
-    buttons[8].iBitmap = 6;
+    buttons[8].iBitmap = ToolbarImageCartSlot;
     buttons[8].fsStyle = BTNS_BUTTON;
     buttons[9].idCommand = ID_EMULATOR_HARDDRIVE1;
     buttons[9].iBitmap = ToolbarImageHardSlot;
     buttons[9].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
     buttons[9].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("1"));
     buttons[10].idCommand = ID_EMULATOR_CARTRIDGE2;
-    buttons[10].iBitmap = 6;
+    buttons[10].iBitmap = ToolbarImageCartSlot;
     buttons[10].fsStyle = BTNS_BUTTON;
     buttons[11].idCommand = ID_EMULATOR_HARDDRIVE2;
     buttons[11].iBitmap = ToolbarImageHardSlot;
@@ -255,7 +256,7 @@ BOOL MainWindow_InitToolbar()
     buttons[15].fsStyle = BTNS_BUTTON;
     buttons[16].fsStyle = BTNS_SEP;
     buttons[17].idCommand = ID_EMULATOR_SOUND;
-    buttons[17].iBitmap = 8;
+    buttons[17].iBitmap = ToolbarImageSoundOff;
     buttons[17].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
     buttons[17].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Sound"));
     buttons[18].idCommand = ID_FILE_SCREENSHOT;
@@ -1082,6 +1083,9 @@ bool MainWindow_DoCommand(int commandId)
     case ID_FILE_SAVESCREENSHOTAS:
         MainWindow_DoFileScreenshotSaveAs();
         break;
+    case ID_FILE_SCREENTOCLIPBOARD:
+        MainWindow_DoFileScreenToClipboard();
+        break;
     case ID_FILE_CREATEDISK:
         MainWindow_DoFileCreateDisk();
         break;
@@ -1220,6 +1224,7 @@ void MainWindow_DoEmulatorSpeed(WORD speed)
 
     MainWindow_UpdateMenu();
 }
+
 void MainWindow_DoEmulatorSound()
 {
     Settings_SetSound(!Settings_GetSound());
@@ -1347,6 +1352,32 @@ void MainWindow_DoFileScreenshotSaveAs()
     {
         AlertWarning(_T("Failed to save screenshot bitmap."));
     }
+}
+
+void MainWindow_DoFileScreenToClipboard()
+{
+    BYTE buffer[82 * 26 + 1];
+    memset(buffer, 0, sizeof(buffer));
+
+    if (!ScreenView_ScreenToText(buffer))
+    {
+        AlertWarning(_T("Failed to prepare text clipboard from screen."));
+        return;
+    }
+
+    // Prepare Unicode text
+    HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, sizeof(buffer) * sizeof(TCHAR));
+    TCHAR * pUnicodeBuffer = (TCHAR*)GlobalLock(hMem);
+    for (int i = 0; i < sizeof(buffer) - 1; i++)
+        pUnicodeBuffer[i] = Translate_KOI8R(buffer[i]);
+    pUnicodeBuffer[sizeof(buffer) - 1] = 0;
+    GlobalUnlock(hMem);
+
+    // Put text to Clipboard
+    OpenClipboard(0);
+    EmptyClipboard();
+    SetClipboardData(CF_UNICODETEXT, hMem);
+    CloseClipboard();
 }
 
 void MainWindow_DoFileCreateDisk()

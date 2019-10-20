@@ -218,11 +218,11 @@ void DisasmView_UpdateWindowText()
 
 void DisasmView_ResizeSubtitleArray(int newSize)
 {
-    DisasmSubtitleItem* pNewMemory = (DisasmSubtitleItem*) ::LocalAlloc(LPTR, sizeof(DisasmSubtitleItem) * newSize);
+    DisasmSubtitleItem* pNewMemory = (DisasmSubtitleItem*) ::calloc(newSize, sizeof(DisasmSubtitleItem));
     if (m_pDisasmSubtitleItems != NULL)
     {
         ::memcpy(pNewMemory, m_pDisasmSubtitleItems, sizeof(DisasmSubtitleItem) * m_nDisasmSubtitleMax);
-        ::LocalFree(m_pDisasmSubtitleItems);
+        ::free(m_pDisasmSubtitleItems);
     }
 
     m_pDisasmSubtitleItems = pNewMemory;
@@ -247,8 +247,8 @@ void DisasmView_DoSubtitles()
 {
     if (m_okDisasmSubtitles)  // Reset subtitles
     {
-        ::LocalFree(m_strDisasmSubtitles);  m_strDisasmSubtitles = NULL;
-        ::LocalFree(m_pDisasmSubtitleItems);  m_pDisasmSubtitleItems = NULL;
+        ::free(m_strDisasmSubtitles);  m_strDisasmSubtitles = NULL;
+        ::free(m_pDisasmSubtitleItems);  m_pDisasmSubtitleItems = NULL;
         m_nDisasmSubtitleMax = m_nDisasmSubtitleCount = 0;
         m_okDisasmSubtitles = FALSE;
         DisasmView_UpdateWindowText();
@@ -279,7 +279,7 @@ void DisasmView_DoSubtitles()
         return;
     }
 
-    m_strDisasmSubtitles = (TCHAR*) ::LocalAlloc(LPTR, dwSubFileSize + 2);
+    m_strDisasmSubtitles = (TCHAR*) ::calloc(dwSubFileSize + 2, 1);
     DWORD dwBytesRead;
     ::ReadFile(hSubFile, m_strDisasmSubtitles, dwSubFileSize, &dwBytesRead, NULL);
     ASSERT(dwBytesRead == dwSubFileSize);
@@ -294,8 +294,8 @@ void DisasmView_DoSubtitles()
     // Parse subtitles
     if (!DisasmView_ParseSubtitles())
     {
-        ::LocalFree(m_strDisasmSubtitles);  m_strDisasmSubtitles = NULL;
-        ::LocalFree(m_pDisasmSubtitleItems);  m_pDisasmSubtitleItems = NULL;
+        ::free(m_strDisasmSubtitles);  m_strDisasmSubtitles = NULL;
+        ::free(m_pDisasmSubtitleItems);  m_pDisasmSubtitleItems = NULL;
         AlertWarning(_T("Failed to parse subtitles file."));
         return;
     }
@@ -392,7 +392,6 @@ BOOL DisasmView_ParseSubtitles()
             {
                 *pText = 0;  // Обозначаем конец комментария - для комментария к блоку
                 pText++;
-                continue;
             }
         }
     }
@@ -441,7 +440,8 @@ void DisasmView_DrawJump(HDC hdc, int yFrom, int delta, int x, int cyLine, COLOR
     int yTo = yFrom + delta * cyLine;
     yFrom += cyLine / 2;
 
-    HGDIOBJ oldPen = SelectObject(hdc, CreatePen(PS_SOLID, 1, color));
+    HPEN hPenJump = ::CreatePen(PS_SOLID, 1, color);
+    HGDIOBJ oldPen = ::SelectObject(hdc, hPenJump);
 
     POINT points[4];
     points[0].x = x;  points[0].y = yFrom;
@@ -454,7 +454,8 @@ void DisasmView_DrawJump(HDC hdc, int yFrom, int delta, int x, int cyLine, COLOR
     MoveToEx(hdc, x - 4, points[3].y, NULL);
     LineTo(hdc, x + 4, yTo + 1);
 
-    SelectObject(hdc, oldPen);
+    ::SelectObject(hdc, oldPen);
+    ::DeleteObject(hPenJump);
 }
 
 void DisasmView_DoDraw(HDC hdc)
@@ -867,10 +868,10 @@ int DisasmView_GetInstructionHint(const WORD* memory, const CProcessor * pProc, 
         int dstmod = (instr >> 3) & 7;
         if (dstreg != 7)
         {
-            TCHAR tempbuf[32];
+            TCHAR tempbuf[42];
             DisasmView_InstructionHint(memory, pProc, pMemCtl, tempbuf, buffer2, -1, -1, dstreg, dstmod);
             WORD psw = pProc->GetPSW();
-            _sntprintf(buffer, 32, _T("%s, C=%c"), tempbuf, (psw & PSW_C) ? '1' : '0');  // "..., C=X"
+            _sntprintf(buffer, 42, _T("%s, C=%c"), tempbuf, (psw & PSW_C) ? '1' : '0');  // "..., C=X"
         }
     }
 
@@ -914,10 +915,12 @@ int DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, WORD base, WORD previ
     // Draw current line background
     if (!m_okDisasmSubtitles)  //NOTE: Subtitles can move lines down
     {
-        HGDIOBJ oldBrush = SelectObject(hdc, CreateSolidBrush(COLOR_CURRENT));
+        HBRUSH hBrushCurrent = ::CreateSolidBrush(COLOR_CURRENT);
+        HGDIOBJ oldBrush = ::SelectObject(hdc, hBrushCurrent);
         int yCurrent = (proccurrent - (current - 5)) * cyLine;
         PatBlt(hdc, 0, yCurrent, 1000, cyLine, PATCOPY);
-        SelectObject(hdc, oldBrush);
+        ::SelectObject(hdc, oldBrush);
+        ::DeleteObject(hBrushCurrent);
     }
 
     // Читаем из памяти процессора в буфер

@@ -84,14 +84,14 @@ bool BmpFile_SaveScreenshot(
 
     DWORD dwBytesWritten = 0;
 
-    uint8_t * pData = (uint8_t *) ::calloc(1, bih.biSizeImage);
+    uint8_t * pData = static_cast<uint8_t*>(::calloc(1, bih.biSizeImage));
     if (pData == NULL)
     {
         CloseHandle(hFile);
         return false;
     }
 
-    uint32_t* palette256 = (uint32_t*) ::calloc(256, 4);
+    uint32_t* palette256 = static_cast<uint32_t*>(::calloc(256, 4));
     ExtendPalette128ToPalette256(palette128, palette256, pBits, screenWidth * screenHeight);
 
     // Prepare the image data
@@ -104,11 +104,11 @@ bool BmpFile_SaveScreenshot(
             uint32_t rgb = *psrc;
             psrc++;
             uint8_t color = 0;
-            for (uint8_t c = 0; c < 256; c++)
+            for (int c = 0; c < 256; c++)
             {
                 if (palette256[c] == rgb)
                 {
-                    color = c;
+                    color = (uint8_t)c;
                     break;
                 }
             }
@@ -254,7 +254,7 @@ bool PngFile_WriteImageData8(FILE * fpFile, uint32_t framenum, const uint32_t* p
     // http://tools.ietf.org/html/rfc1951
     uint32_t pDataLength = 8 + 2 + (6 + screenWidth) * screenHeight + 4/*adler*/ + 4;
     if (framenum > 1) pDataLength += 4;
-    uint8_t * pData = (uint8_t *) ::calloc((size_t)pDataLength, 1);
+    uint8_t * pData = static_cast<uint8_t*>(::calloc((size_t)pDataLength, 1));
     if (pData == NULL)
         return false;
     SaveValueMSB(pData, pDataLength - 12);
@@ -274,7 +274,7 @@ bool PngFile_WriteImageData8(FILE * fpFile, uint32_t framenum, const uint32_t* p
         *(pdst++) = (line < screenHeight - 1) ? 0 : 1;  // Last?
         *(pdst++) = linelen & 0xff;
         *(pdst++) = (linelen >> 8) & 0xff;
-        *(pdst++) = ~linelen & 0xff;
+        *(pdst++) = (~linelen) & 0xff;
         *(pdst++) = (~linelen >> 8) & 0xff;
 
         uint8_t * pline = pdst;
@@ -284,11 +284,11 @@ bool PngFile_WriteImageData8(FILE * fpFile, uint32_t framenum, const uint32_t* p
         {
             uint32_t rgb = *(psrc++);
             uint8_t color = 0;
-            for (uint8_t c = 0; c < 256; c++)
+            for (int c = 0; c < 256; c++)
             {
                 if (palette256[c] == rgb)
                 {
-                    color = c;
+                    color = (uint8_t)c;
                     break;
                 }
             }
@@ -327,7 +327,7 @@ bool PngFile_SaveScreenshot(
     if (fpFile == NULL)
         return false;
 
-    uint32_t* palette256 = (uint32_t*) ::calloc(256, 4);
+    uint32_t* palette256 = static_cast<uint32_t*>(::calloc(256, 4));
     ExtendPalette128ToPalette256(palette128, palette256, pBits, screenWidth * screenHeight);
 
     if (!PngFile_WriteHeader(fpFile, 8, screenWidth, screenHeight))
@@ -361,13 +361,6 @@ bool PngFile_SaveScreenshot(
 
 
 //////////////////////////////////////////////////////////////////////
-
-struct APNGFILE
-{
-    FILE* fpFile;
-    uint32_t dwNextFrameNumber;
-    fpos_t nActlOffset;       // "acTL" chunk offset
-};
 
 bool PngFile_WriteActl(FILE * fpFile, uint32_t numframes)
 {

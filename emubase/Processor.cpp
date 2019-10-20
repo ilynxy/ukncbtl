@@ -57,7 +57,7 @@ uint16_t CLR_TIMING[8] =
     0x000B, 0x001C, 0x0023, 0x002F, 0x0023, 0x002F, 0x002F, 0x003F
 };
 
-uint16_t CRLB_TIMING[8] =
+uint16_t CLRB_TIMING[8] =
 {
     0x000B, 0x0021, 0x0027, 0x0033, 0x0027, 0x0033, 0x0037, 0x0043
 };
@@ -79,13 +79,13 @@ uint16_t XOR_TIMING[8] =
 
 uint16_t ASH_TIMING[8] =
 {
-    0x0029,	0x003D, 0x003D, 0x0049, 0x0041, 0x004D, 0x0055, 0x0062
+    0x0029, 0x003D, 0x003D, 0x0049, 0x0041, 0x004D, 0x0055, 0x0062
 };
 uint16_t ASH_S_TIMING = 0x0008;
 
 uint16_t ASHC_TIMING[8] =
 {
-    0x0039, 0x004E, 0x004D, 0x005A, 0x0051, 0x005D, 0x0066,	0x0072
+    0x0039, 0x004E, 0x004D, 0x005A, 0x0051, 0x005D, 0x0066, 0x0072
 };
 uint16_t ASHC_S_TIMING = 0x0008;
 
@@ -96,12 +96,12 @@ uint16_t MUL_TIMING[8] =
 
 uint16_t DIV_TIMING[8] =
 {
-    0x0080, 0x00E8, 0x00E7, 0x00F4, 0x00EB, 0x00F8,	0x0100,	0x010D
+    0x0080, 0x00E8, 0x00E7, 0x00F4, 0x00EB, 0x00F8, 0x0100, 0x010D
 };
 
 uint16_t JMP_TIMING[7] =
 {
-    0x002D, 0x002D, 0x003D, 0x002D, 0x003D, 0x0031,	0x0041
+    0x002D, 0x002D, 0x003D, 0x002D, 0x003D, 0x0031, 0x0041
 };
 uint16_t JSR_TIMING[7] =
 {
@@ -125,18 +125,18 @@ uint16_t RESET_TIMING = 105 + 968;  // ТО КМ1801ВМ2 стр. 134
 //////////////////////////////////////////////////////////////////////
 
 
-CProcessor::ExecuteMethodRef* CProcessor::m_pExecuteMethodMap = NULL;
+CProcessor::ExecuteMethodRef* CProcessor::m_pExecuteMethodMap = nullptr;
 
 #define RegisterMethodRef(/*uint16_t*/ opstart, /*uint16_t*/ opend, /*CProcessor::ExecuteMethodRef*/ methodref) \
-	{ \
-		for (uint32_t opcode = (opstart); opcode <= (opend); opcode++) \
-			m_pExecuteMethodMap[opcode] = (methodref); \
-	}
+    { \
+        for (uint32_t opcode = (opstart); opcode <= (opend); opcode++) \
+            m_pExecuteMethodMap[opcode] = (methodref); \
+    }
 
 void CProcessor::Init()
 {
-    ASSERT(m_pExecuteMethodMap == NULL);
-    m_pExecuteMethodMap = (CProcessor::ExecuteMethodRef*) ::calloc(65536, sizeof(CProcessor::ExecuteMethodRef));
+    ASSERT(m_pExecuteMethodMap == nullptr);
+    m_pExecuteMethodMap = static_cast<CProcessor::ExecuteMethodRef*>(::calloc(65536, sizeof(CProcessor::ExecuteMethodRef)));
 
     // Сначала заполняем таблицу ссылками на метод ExecuteUNKNOWN, выполняющий TRAP 10
     RegisterMethodRef( 0000000, 0177777, &CProcessor::ExecuteUNKNOWN );
@@ -248,7 +248,7 @@ void CProcessor::Init()
 
 void CProcessor::Done()
 {
-    ::free(m_pExecuteMethodMap);  m_pExecuteMethodMap = NULL;
+    ::free(m_pExecuteMethodMap);  m_pExecuteMethodMap = nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -262,7 +262,7 @@ CProcessor::CProcessor (LPCTSTR name)
     m_savepc = 0177777;
     m_okStopped = true;
     m_internalTick = 0;
-    m_pMemoryController = NULL;
+    m_pMemoryController = nullptr;
     m_waitmode = false;
     m_stepmode = false;
     m_buserror = false;
@@ -718,7 +718,7 @@ void CProcessor::ExecuteMFUS ()  // ЧЧП, move from user space - Чтение памяти ад
     uint16_t word = GetWord(addr);  // Read in USER mode
     SetHALT(true);
     SetReg(5, addr + 2);
-    if (!m_RPLYrq) 	SetReg(0, word);
+    if (!m_RPLYrq)  SetReg(0, word);
 
     m_internalTick = MOV_TIMING[0][2];
 }
@@ -1865,7 +1865,7 @@ void CProcessor::ExecuteDIV ()  // DIV
         SetLPSW(new_psw);
         return;
     }
-    if ((longsrc == 020000000000) && (src2 == -1))
+    if ((longsrc == (int32_t)020000000000) && (src2 == -1))
     {
         new_psw |= PSW_V; // переполняемся, товарищи
         SetLPSW(new_psw);

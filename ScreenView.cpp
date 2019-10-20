@@ -15,7 +15,7 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "Views.h"
 #include "Emulator.h"
 #include "util\BitmapFile.h"
-
+#include "emubase\Emubase.h"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -193,7 +193,7 @@ void ScreenView_RegisterClass()
 
 void ScreenView_Init()
 {
-    m_bits = (DWORD*) ::calloc(UKNC_SCREEN_WIDTH * UKNC_SCREEN_HEIGHT * 4, 1);
+    m_bits = static_cast<DWORD*>(::calloc(UKNC_SCREEN_WIDTH * UKNC_SCREEN_HEIGHT * 4, 1));
 }
 
 void ScreenView_Done()
@@ -379,8 +379,7 @@ LRESULT CALLBACK ScreenViewWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARA
             SetCursor(::LoadCursor(NULL, MAKEINTRESOURCE(IDC_IBEAM)));
             return (LRESULT) TRUE;
         }
-        else
-            return DefWindowProc(hWnd, message, wParam, lParam);
+        return DefWindowProc(hWnd, message, wParam, lParam);
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
@@ -456,7 +455,7 @@ void ScreenView_PrepareScreen()
 
     const DWORD* colors = ScreenView_GetPalette();
 
-    Emulator_PrepareScreenRGB32(m_bits, colors);
+    Emulator_PrepareScreenRGB32(m_bits, (const uint32_t*)colors);
 }
 
 void ScreenView_PutKeyEventToQueue(WORD keyevent)
@@ -557,8 +556,7 @@ void ScreenView_ScanKeyboard()
             bEntPressed = FALSE;
         }
         // Выбираем таблицу маппинга в зависимости от флага РУС/ЛАТ в УКНЦ
-        BYTE ukncRegister = (BYTE) g_pBoard->GetKeyboardRegister();
-        const BYTE* pTable;
+        uint16_t ukncRegister = g_pBoard->GetKeyboardRegister();
 
         // Check every key for state change
         for (int scan = 0; scan < 256; scan++)
@@ -567,7 +565,8 @@ void ScreenView_ScanKeyboard()
             BYTE oldstate = m_ScreenKeyState[scan];
             if ((newstate & 128) != (oldstate & 128))  // Key state changed - key pressed or released
             {
-                BYTE pcscan = (BYTE) scan;
+                const BYTE* pTable = nullptr;
+                BYTE pcscan = (BYTE)scan;
                 BYTE ukncscan;
                 if (oldstate & 128)
                 {
@@ -610,9 +609,9 @@ BOOL ScreenView_SaveScreenshot(LPCTSTR sFileName, int screenshotMode)
 {
     ASSERT(sFileName != NULL);
 
-    DWORD* pBits = (DWORD*) ::calloc(UKNC_SCREEN_WIDTH * UKNC_SCREEN_HEIGHT, 4);
+    void* pBits = ::calloc(UKNC_SCREEN_WIDTH * UKNC_SCREEN_HEIGHT, 4);
     const DWORD* colors = ScreenView_GetPalette();
-    Emulator_PrepareScreenRGB32(pBits, colors);
+    Emulator_PrepareScreenRGB32(pBits, (const uint32_t*)colors);
 
     const DWORD * palette = ScreenView_GetPalette();
 
@@ -620,7 +619,7 @@ BOOL ScreenView_SaveScreenshot(LPCTSTR sFileName, int screenshotMode)
     ScreenView_GetScreenshotSize(screenshotMode, &scrwidth, &scrheight);
     PREPARE_SCREENSHOT_CALLBACK callback = ScreenView_GetScreenshotCallback(screenshotMode);
 
-    DWORD* pScrBits = (DWORD*) ::calloc(scrwidth * scrheight, 4);
+    void* pScrBits = ::calloc(scrwidth * scrheight, 4);
     callback(pBits, pScrBits);
     ::free(pBits);
 
@@ -634,6 +633,111 @@ BOOL ScreenView_SaveScreenshot(LPCTSTR sFileName, int screenshotMode)
     ::free(pScrBits);
 
     return result;
+}
+
+static BYTE RecognizeCharacter(const uint8_t* fontcur, const uint8_t* fontstd, const uint32_t* pBits)
+{
+    int16_t bestmatch = -32767;
+    uint8_t bestchar = 0;
+    for (uint8_t charidx = 0; charidx < 16 * 14; charidx++)
+    {
+        int16_t matchcur = 0;
+        int16_t matchstd = 0;
+        const uint32_t * pb = pBits;
+        for (int16_t y = 0; y < 11; y++)
+        {
+            uint8_t fontcurdata = fontcur[charidx * 11 + y];
+            uint8_t fontstddata = fontstd[charidx * 11 + y];
+            for (int x = 0; x < 8; x++)
+            {
+                uint32_t color = pb[x];
+                int sum = (color & 0xff) + ((color >> 8) & 0xff) + ((color >> 16) & 0xff);
+                uint8_t fontcurbit = (fontcurdata >> x) & 1;
+                uint8_t fontstdbit = (fontstddata >> x) & 1;
+                if (sum > 384)
+                {
+                    matchcur += fontcurbit;  matchstd += fontstdbit;
+                }
+                else
+                {
+                    matchcur -= fontcurbit;  matchstd -= fontstdbit;
+                }
+            }
+            pb += 640;
+        }
+        if (matchcur > bestmatch)
+        {
+            bestmatch = matchcur;
+            bestchar = charidx;
+        }
+        if (matchstd > bestmatch)
+        {
+            bestmatch = matchstd;
+            bestchar = charidx;
+        }
+    }
+
+    return 0x20 + bestchar;
+}
+
+// buffer size is 82 * 26 + 1 means 26 lines, 80 chars in every line plus CR/LF plus trailing zero
+BOOL ScreenView_ScreenToText(uint8_t* buffer)
+{
+    // Get screenshot
+    void* pBits = ::calloc(UKNC_SCREEN_WIDTH * UKNC_SCREEN_HEIGHT, 4);
+    const uint32_t* colors = (const uint32_t*)ScreenView_GrayColors;
+    Emulator_PrepareScreenToText(pBits, colors);
+
+    // Prepare font, get current font data from PPU memory
+    CMemoryController* pPpuMemCtl = g_pBoard->GetPPUMemoryController();
+    uint8_t fontcur[11 * 16 * 14];
+    uint16_t fontaddr = 014142 + 32 * 2;
+    int addrtype = 0;
+    for (BYTE charidx = 0; charidx < 16 * 14; charidx++)
+    {
+        uint16_t charaddr = pPpuMemCtl->GetWordView(fontaddr + charidx * 2, FALSE, FALSE, &addrtype);
+        for (int16_t y = 0; y < 11; y++)
+        {
+            uint16_t fontdata = pPpuMemCtl->GetWordView((charaddr + y) & ~1, FALSE, FALSE, &addrtype);
+            if (((charaddr + y) & 1) == 1) fontdata >>= 8;
+            fontcur[charidx * 11 + y] = (uint8_t)(fontdata & 0xff);
+        }
+    }
+    // Prepare font, get standard font data from PPU memory
+    uint8_t fontstd[11 * 16 * 14];
+    uint16_t charstdaddr = 0120170;
+    for (uint16_t idx = 0; idx < 16 * 14 * 11; idx++)
+    {
+        uint16_t fontdata = pPpuMemCtl->GetWordView(charstdaddr & ~1, FALSE, FALSE, &addrtype);
+        if ((charstdaddr & 1) == 1) fontdata >>= 8;
+        fontstd[idx] = (uint8_t)(fontdata & 0xff);
+        charstdaddr++;
+    }
+
+    // Loop for lines
+    int charidx = 0;
+    int y = 0;
+    while (y <= 288 - 11)
+    {
+        uint32_t * pCharBits = ((uint32_t*)pBits) + y * 640;
+
+        for (int x = 0; x < 640; x += 8)
+        {
+            uint8_t ch = RecognizeCharacter(fontcur, fontstd, pCharBits + x);
+            buffer[charidx] = ch;
+            charidx++;
+        }
+        buffer[charidx++] = 0x0d;
+        buffer[charidx++] = 0x0a;
+
+        y += 11;
+        if (y == 11) y++;  // Extra line after upper indicator lines
+        if (y == 276) y++;  // Extra line before lower indicator lines
+    }
+
+    ::free(pBits);
+
+    return TRUE;
 }
 
 

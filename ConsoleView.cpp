@@ -281,13 +281,14 @@ void PrintRegister(LPCTSTR strName, WORD value)
 BOOL SaveMemoryDump(CProcessor *pProc)
 {
     CMemoryController* pMemCtl = pProc->GetMemoryController();
-    WORD * pData = (WORD *) ::calloc(65536, 1);
+    WORD * pData = static_cast<WORD*>(::calloc(65536, 1));
     if (pData == NULL)
-        return false;
+        return FALSE;
 
     int isHaltMode = pProc->IsHaltMode();
+    int addrtype;
     for (WORD i = 0; i <= 32767; i++)
-        pData[i] = pMemCtl->GetWord(i * 2, isHaltMode);
+        pData[i] = pMemCtl->GetWordView(i * 2, isHaltMode, false, &addrtype);
 
     TCHAR fname[20];
     wsprintf(fname, _T("memdump%s.bin"), pProc->GetName());
@@ -300,9 +301,9 @@ BOOL SaveMemoryDump(CProcessor *pProc)
     ::free(pData);
     ::CloseHandle(file);
     if (dwBytesWritten != 65536)
-        return false;
+        return FALSE;
 
-    return true;
+    return TRUE;
 }
 
 void SaveDisplayListDump()
@@ -318,10 +319,10 @@ void SaveDisplayListDump()
     {
         _ftprintf(fpFile, _T("%4d  %06o  "), yy, address);
 
-        WORD tag1 = 0, tag2 = 0;
+        WORD tag2 = 0;
         if (okTagSize)  // 4-word tag
         {
-            tag1 = g_pBoard->GetRAMWord(0, address);
+            WORD tag1 = g_pBoard->GetRAMWord(0, address);
             address += 2;
             tag2 = g_pBoard->GetRAMWord(0, address);
             address += 2;
@@ -381,8 +382,9 @@ void PrintMemoryDump(CProcessor* pProc, WORD address, int lines)
     for (int line = 0; line < lines; line++)
     {
         WORD dump[8];
+        int addrtype;
         for (WORD i = 0; i < 8; i++)
-            dump[i] = pMemCtl->GetWord(address + i * 2, okHaltMode);
+            dump[i] = pMemCtl->GetWordView(address + i * 2, okHaltMode, false, &addrtype);
 
         TCHAR buffer[2 + 6 + 2 + 7 * 8 + 1 + 16 + 1 + 2];
         TCHAR* pBuf = buffer;

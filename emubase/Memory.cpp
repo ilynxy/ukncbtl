@@ -20,11 +20,11 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 
 CMemoryController::CMemoryController ()
 {
-    m_pProcessor = NULL;
-    m_pBoard = NULL;
-    m_pMapping = (uint8_t*) malloc(65536);
+    m_pProcessor = nullptr;
+    m_pBoard = nullptr;
+    m_pMapping = static_cast<uint8_t*>(malloc(65536));
     memset(m_pMapping, ADDRTYPE_NONE, 65536);
-    m_pDevices = NULL;
+    m_pDevices = nullptr;
     m_nDeviceCount = 0;
 }
 
@@ -32,30 +32,30 @@ CMemoryController::~CMemoryController ()
 {
     free(m_pMapping);
 
-    if (m_pDevices != NULL)
+    if (m_pDevices != nullptr)
         free(m_pDevices);
 }
 
 void CMemoryController::AttachDevices(const CBusDevice **pDevices)
 {
     // Free the previously allocated memory
-    if (m_pDevices != NULL)
+    if (m_pDevices != nullptr)
     {
-        free(m_pDevices);  m_pDevices = NULL;
+        free(m_pDevices);  m_pDevices = nullptr;
     }
 
     // Calculate device count
     const CBusDevice ** p = pDevices;
     int deviceCount = 0;
-    while (*p != NULL)
+    while (*p != nullptr)
     {
         deviceCount++;
         p++;
     }
 
     // Allocate memory and store the devices
-    m_pDevices = (CBusDevice **) calloc((deviceCount + 1), sizeof(CBusDevice*));
-    m_pDevices[0] = NULL;
+    m_pDevices = static_cast<CBusDevice **>(calloc((deviceCount + 1), sizeof(CBusDevice*)));
+    m_pDevices[0] = nullptr;
     memcpy(m_pDevices + 1, pDevices, deviceCount * sizeof(CBusDevice*));
     m_nDeviceCount = deviceCount;
 
@@ -71,7 +71,7 @@ void CMemoryController::UpdateMemoryMap()
     for (int device = 1; device <= m_nDeviceCount; device++, pDevices++)
     {
         CBusDevice * pDevice = *pDevices;
-        if (pDevice == NULL) continue;
+        if (pDevice == nullptr) continue;
         uint8_t deviceIndex = (uint8_t)device | ADDRTYPE_IO;
         const uint16_t * pRanges = (*pDevices)->GetAddressRanges();
         while (*pRanges != 0)
@@ -111,6 +111,7 @@ uint16_t CMemoryController::GetWordView(uint16_t address, bool okHaltMode, bool 
     case ADDRTYPE_IO:  // I/O port, not memory
         return 0;
     case ADDRTYPE_DENY:  // This memory is inaccessible for reading
+    case ADDRTYPE_NONE:
         return 0;
     }
 
@@ -143,6 +144,7 @@ uint16_t CMemoryController::GetWord(uint16_t address, bool okHaltMode, bool okEx
         //TODO: What to do if okExec == true ?
         return GetPortWord(address);
     case ADDRTYPE_DENY:
+    case ADDRTYPE_NONE:
         //TODO: Exception processing
         return 0;
     }
@@ -179,6 +181,7 @@ uint8_t CMemoryController::GetByte(uint16_t address, bool okHaltMode)
         //TODO: What to do if okExec == true ?
         return GetPortByte(address);
     case ADDRTYPE_DENY:
+    case ADDRTYPE_NONE:
         //TODO: Exception processing
         return 0;
     }
@@ -203,18 +206,16 @@ void CMemoryController::SetWord(uint16_t address, bool okHaltMode, uint16_t word
         m_pBoard->SetRAMByte(1, offset / 2, (uint8_t)(word & 0xff));
         m_pBoard->SetRAMByte(2, offset / 2, (uint8_t)((word >> 8) & 0xff));
         return;
-
     case ADDRTYPE_ROMCART1:
     case ADDRTYPE_ROMCART2:
     case ADDRTYPE_ROM:
         // Nothing to do: writing to ROM
         return;
-
     case ADDRTYPE_IO:
         SetPortWord(address, word);
         return;
-
     case ADDRTYPE_DENY:
+    case ADDRTYPE_NONE:
         //TODO: Exception processing
         return;
     }
@@ -249,6 +250,7 @@ void CMemoryController::SetByte(uint16_t address, bool okHaltMode, uint8_t byte)
         SetPortByte(address, byte);
         return;
     case ADDRTYPE_DENY:
+    case ADDRTYPE_NONE:
         //TODO: Exception processing
         return;
     }
