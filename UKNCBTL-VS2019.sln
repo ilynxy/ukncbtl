@@ -1,0 +1,57 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2024
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UKNCBTL", "UKNCBTL-VS2019.vcxproj", "{8884C84B-468B-433B-9CFB-0799875130E8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{EAA60E39-5D83-44F0-B150-9790A839A2E8} = {EAA60E39-5D83-44F0-B150-9790A839A2E8}
+		{451E4BD1-461C-4A30-8DAF-9F7EC05498D2} = {451E4BD1-461C-4A30-8DAF-9F7EC05498D2}
+		{049806DE-9954-4D31-A5C7-B47E59502AAA} = {049806DE-9954-4D31-A5C7-B47E59502AAA}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RenderVfw", "..\ukncbtl-renders\RenderVfw\RenderVfw-VS2019.vcxproj", "{451E4BD1-461C-4A30-8DAF-9F7EC05498D2}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RenderOpenGL", "..\ukncbtl-renders\RenderOpenGL\RenderOpenGL-VS2019.vcxproj", "{EAA60E39-5D83-44F0-B150-9790A839A2E8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RenderDX9", "..\ukncbtl-renders\RenderDX9\RenderDX9-VS2019.vcxproj", "{049806DE-9954-4D31-A5C7-B47E59502AAA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Product|Win32 = Product|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8884C84B-468B-433B-9CFB-0799875130E8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8884C84B-468B-433B-9CFB-0799875130E8}.Debug|Win32.Build.0 = Debug|Win32
+		{8884C84B-468B-433B-9CFB-0799875130E8}.Product|Win32.ActiveCfg = Product|Win32
+		{8884C84B-468B-433B-9CFB-0799875130E8}.Product|Win32.Build.0 = Product|Win32
+		{8884C84B-468B-433B-9CFB-0799875130E8}.Release|Win32.ActiveCfg = Release|Win32
+		{8884C84B-468B-433B-9CFB-0799875130E8}.Release|Win32.Build.0 = Release|Win32
+		{451E4BD1-461C-4A30-8DAF-9F7EC05498D2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{451E4BD1-461C-4A30-8DAF-9F7EC05498D2}.Debug|Win32.Build.0 = Debug|Win32
+		{451E4BD1-461C-4A30-8DAF-9F7EC05498D2}.Product|Win32.ActiveCfg = Release|Win32
+		{451E4BD1-461C-4A30-8DAF-9F7EC05498D2}.Product|Win32.Build.0 = Release|Win32
+		{451E4BD1-461C-4A30-8DAF-9F7EC05498D2}.Release|Win32.ActiveCfg = Release|Win32
+		{451E4BD1-461C-4A30-8DAF-9F7EC05498D2}.Release|Win32.Build.0 = Release|Win32
+		{EAA60E39-5D83-44F0-B150-9790A839A2E8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EAA60E39-5D83-44F0-B150-9790A839A2E8}.Debug|Win32.Build.0 = Debug|Win32
+		{EAA60E39-5D83-44F0-B150-9790A839A2E8}.Product|Win32.ActiveCfg = Release|Win32
+		{EAA60E39-5D83-44F0-B150-9790A839A2E8}.Product|Win32.Build.0 = Release|Win32
+		{EAA60E39-5D83-44F0-B150-9790A839A2E8}.Release|Win32.ActiveCfg = Release|Win32
+		{EAA60E39-5D83-44F0-B150-9790A839A2E8}.Release|Win32.Build.0 = Release|Win32
+		{049806DE-9954-4D31-A5C7-B47E59502AAA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{049806DE-9954-4D31-A5C7-B47E59502AAA}.Debug|Win32.Build.0 = Debug|Win32
+		{049806DE-9954-4D31-A5C7-B47E59502AAA}.Product|Win32.ActiveCfg = Release|Win32
+		{049806DE-9954-4D31-A5C7-B47E59502AAA}.Product|Win32.Build.0 = Release|Win32
+		{049806DE-9954-4D31-A5C7-B47E59502AAA}.Release|Win32.ActiveCfg = Release|Win32
+		{049806DE-9954-4D31-A5C7-B47E59502AAA}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C2CD6979-CE8C-48E5-9298-ED81ECA4112C}
+	EndGlobalSection
+EndGlobal
