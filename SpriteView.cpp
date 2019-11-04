@@ -55,6 +55,15 @@ void SpriteView_UpdateWindowText();
 void SpriteView_PrepareBitmap();
 void SpriteView_UpdateScrollPos();
 
+int m_nSprite_Mode = 0;
+static LPCTSTR SpriteModeNames[] =
+{
+    _T("Black and White 8 bits"),
+    _T("Green and Red on Black"),
+    _T("Green and Red on Blue")
+};
+const int m_nSprite_ModeMax = 2;
+
 
 //////////////////////////////////////////////////////////////////////
 
@@ -110,6 +119,8 @@ void SpriteView_Create(int x, int y)
     m_nSprite_width = (int)Settings_GetSpriteWidth();
     if (m_nSprite_width <= 0) m_nSprite_width = 1;
     if (m_nSprite_width > 32) m_nSprite_width = 32;
+    m_nSprite_Mode = Settings_GetSpriteMode();
+    if (m_nSprite_Mode > m_nSprite_ModeMax) m_nSprite_Mode = m_nSprite_ModeMax;
 
     SpriteView_InitBitmap();
     SpriteView_UpdateWindowText();
@@ -190,8 +201,6 @@ LRESULT CALLBACK SpriteViewViewerWndProc(HWND hWnd, UINT message, WPARAM wParam,
         break;
     case WM_KEYDOWN:
         return (LRESULT)SpriteView_OnKeyDown(wParam, lParam);
-        //case WM_HSCROLL:
-        //    return (LRESULT)SpriteView_OnHScroll(wParam, lParam);
     case WM_VSCROLL:
         return (LRESULT)SpriteView_OnVScroll(wParam, lParam);
     case WM_MOUSEWHEEL:
@@ -227,6 +236,7 @@ void SpriteView_GoToAddress(WORD address)
     SpriteView_UpdateWindowText();
     SpriteView_PrepareBitmap();
     InvalidateRect(m_hwndSpriteViewer, NULL, TRUE);
+    SpriteView_UpdateScrollPos();
 }
 void SpriteView_SetSpriteWidth(int width)
 {
@@ -241,30 +251,23 @@ void SpriteView_SetSpriteWidth(int width)
     SpriteView_UpdateWindowText();
     SpriteView_PrepareBitmap();
     InvalidateRect(m_hwndSpriteViewer, NULL, TRUE);
+    SpriteView_UpdateScrollPos();
 }
 
 void SpriteView_UpdateWindowText()
 {
-    LPCTSTR formats[] =
-    {
-        _T(" black and white 8 bits"),
-        _T(" {g8, r8} green and red plane bits")
-    };
+    LPCTSTR spriteModeName = _T("");
+    if (m_nSprite_Mode < m_nSprite_ModeMax)
+        spriteModeName = SpriteModeNames[m_nSprite_Mode];
 
-    const std::size_t formats_max = sizeof(formats) / sizeof(formats[0]);
-    LPCTSTR p_nSrpite_format_description = _T("");
-    if (m_nSprite_format < formats_max)
-        p_nSrpite_format_description = formats[m_nSprite_format];
-
-    const std::size_t buffer_size = 128;
+    const size_t buffer_size = 128;
     TCHAR buffer[buffer_size];
     _stprintf_s(buffer, buffer_size,
-        _T("Sprite Viewer - address %06o, width %d, mode%d%s"), 
-        m_wSprite_BaseAddress, 
-        m_nSprite_width,
-        m_nSprite_format,
-        p_nSrpite_format_description
-    );
+            _T("Sprite Viewer - address %06o, width %d, mode%d %s"),
+            m_wSprite_BaseAddress,
+            m_nSprite_width,
+            m_nSprite_Mode,
+            spriteModeName);
     ::SetWindowText(g_hwndSprite, buffer);
 }
 
@@ -273,23 +276,22 @@ BOOL SpriteView_OnKeyDown(WPARAM vkey, LPARAM /*lParam*/)
     switch (vkey)
     {
     case VK_LEFT:
-        SpriteView_GoToAddress(m_wSprite_BaseAddress - (WORD)(m_nSprite_ImageCY * m_nSprite_width));
-        break;
     case VK_RIGHT:
-        SpriteView_GoToAddress(m_wSprite_BaseAddress + (WORD)(m_nSprite_ImageCY * m_nSprite_width));
-        break;
+        {
+            int spriteWidth = ((m_nSprite_Mode == 0) ? 1 : 2) * m_nSprite_width * (vkey == VK_LEFT ? -1 : 1);
+            SpriteView_GoToAddress(m_wSprite_BaseAddress + (WORD)(m_nSprite_ImageCY * spriteWidth));
+            break;
+        }
     case VK_UP:
-        if (GetKeyState(VK_CONTROL) & 0x8000)
-            SpriteView_GoToAddress(m_wSprite_BaseAddress - (WORD)m_nSprite_width);
-        else
-            SpriteView_GoToAddress(m_wSprite_BaseAddress - 1);
-        break;
     case VK_DOWN:
-        if (GetKeyState(VK_CONTROL) & 0x8000)
-            SpriteView_GoToAddress(m_wSprite_BaseAddress + (WORD)m_nSprite_width);
-        else
-            SpriteView_GoToAddress(m_wSprite_BaseAddress + 1);
-        break;
+        {
+            int spriteMult = ((m_nSprite_Mode == 0) ? 1 : 2) * (vkey == VK_UP ? -1 : 1);
+            if (GetKeyState(VK_CONTROL) & 0x8000)
+                SpriteView_GoToAddress(m_wSprite_BaseAddress + (WORD)(spriteMult * m_nSprite_width));
+            else
+                SpriteView_GoToAddress((WORD)(m_wSprite_BaseAddress + spriteMult));
+            break;
+        }
     case VK_OEM_4: // '[' -- Decrement Sprite Width
         SpriteView_SetSpriteWidth(m_nSprite_width - 1);
         break;
@@ -297,10 +299,11 @@ BOOL SpriteView_OnKeyDown(WPARAM vkey, LPARAM /*lParam*/)
         SpriteView_SetSpriteWidth(m_nSprite_width + 1);
         break;
     case 0x4D: // 'M' - Switch sprite decode mode
-        if (m_nSprite_format == m_nSprite_format_max)
-            m_nSprite_format = 0;
+        if (m_nSprite_Mode == m_nSprite_ModeMax)
+            m_nSprite_Mode = 0;
         else
-            ++ m_nSprite_format;
+            ++m_nSprite_Mode;
+        Settings_SetSpriteMode((WORD)m_nSprite_Mode);
 
         SpriteView_UpdateWindowText();
         SpriteView_PrepareBitmap();
@@ -328,22 +331,25 @@ BOOL SpriteView_OnMouseWheel(WPARAM wParam, LPARAM /*lParam*/)
     if (nDelta > 4) nDelta = 4;
     if (nDelta < -4) nDelta = -4;
 
-    SpriteView_GoToAddress(m_wSprite_BaseAddress - (WORD)(nDelta * 3 * m_nSprite_width));
+    int spriteWidth = ((m_nSprite_Mode == 0) ? 1 : 2) * m_nSprite_width;
+    SpriteView_GoToAddress(m_wSprite_BaseAddress - (WORD)(nDelta * 3 * spriteWidth));
 
     return FALSE;
 }
 
 BOOL SpriteView_OnVScroll(WPARAM wParam, LPARAM /*lParam*/)
 {
+    int spriteWidth = ((m_nSprite_Mode == 0) ? 1 : 2) * m_nSprite_width;
+
     //WORD scrollpos = HIWORD(wParam);
     WORD scrollcmd = LOWORD(wParam);
     switch (scrollcmd)
     {
     case SB_LINEDOWN:
-        SpriteView_GoToAddress(m_wSprite_BaseAddress + (WORD)m_nSprite_width);
+        SpriteView_GoToAddress(m_wSprite_BaseAddress + (WORD)spriteWidth);
         break;
     case SB_LINEUP:
-        SpriteView_GoToAddress(m_wSprite_BaseAddress - (WORD)m_nSprite_width);
+        SpriteView_GoToAddress(m_wSprite_BaseAddress - (WORD)spriteWidth);
         break;
         //case SB_PAGEDOWN:
         //    break;
@@ -358,7 +364,15 @@ BOOL SpriteView_OnVScroll(WPARAM wParam, LPARAM /*lParam*/)
 
 void SpriteView_UpdateScrollPos()
 {
-    //TODO
+    SCROLLINFO si;
+    ZeroMemory(&si, sizeof(si));
+    si.cbSize = sizeof(si);
+    si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE;
+    si.nPage = 0;  //TODO
+    si.nPos = m_wSprite_BaseAddress;
+    si.nMin = 0;
+    si.nMax = 0x10000 - 1;
+    SetScrollInfo(m_hwndSpriteViewer, SB_VERT, &si, TRUE);
 }
 
 void SpriteView_PrepareBitmap()
@@ -374,12 +388,29 @@ void SpriteView_PrepareBitmap()
         {
             DWORD* pBits = m_pSprite_bits + (m_nSprite_ImageCY - 1 - y) * m_nSprite_ImageCX + x;
 
+            BOOL okHalt = g_pBoard->GetCPU()->IsHaltMode();
             for (int w = 0; w < m_nSprite_width; w++)
             {
-                if (m_nSprite_format == 1)
+                if (m_nSprite_Mode == 0)
+                {
+                    // Get byte from memory -- CPU memory only for now
+                    int addrtype = 0;
+                    WORD value = g_pBoard->GetCPUMemoryController()->GetWordView(address & ~1, okHalt, FALSE, &addrtype);
+                    if (address & 1)
+                        value = value >> 8;
+                    ++address;
+
+                    for (int i = 0; i < 8; ++i)
+                    {
+                        COLORREF color = (value & 1) ? 0xffffff : 0;
+                        *pBits = color;
+                        pBits++;
+                        value = value >> 1;
+                    }
+                }
+                else
                 {
                     int addrtype = 0;
-                    BOOL okHalt = g_pBoard->GetCPU()->IsHaltMode();
                     WORD value = g_pBoard->GetCPUMemoryController()->GetWordView(address & ~1, okHalt, FALSE, &addrtype);
                     if (address & 1)
                         value = value >> 8;
@@ -389,38 +420,17 @@ void SpriteView_PrepareBitmap()
                         value1 = value1 >> 8;
                     ++address;
 
+                    WORD background = (m_nSprite_Mode == 1) ? 0 : 0x0000ff;
                     for (int i = 0; i < 8; ++i)
                     {
-                        COLORREF color = 0;
-                        color |= (value & 1) ? 0x00FF00 : 0;
-                        color |= (value1 & 1) ? 0xFF0000 : 0;
-
+                        COLORREF color = background;
+                        color |= (value & 1) ? 0x00ff00 : 0;
+                        color |= (value1 & 1) ? 0xff0000 : 0;
                         *pBits = color;
                         pBits++;
-
                         value = value >> 1;
                         value1 = value1 >> 1;
                     }
-                }
-                else
-                {
-                    // Get byte from memory -- CPU memory only for now
-                    int addrtype = 0;
-                    BOOL okHalt = g_pBoard->GetCPU()->IsHaltMode();
-                    WORD value = g_pBoard->GetCPUMemoryController()->GetWordView(address & ~1, okHalt, FALSE, &addrtype);
-                    if (address & 1)
-                        value = value >> 8;
-
-                    for (int i = 0; i < 8; i++)
-                    {
-                        COLORREF color = (value & 1) ? 0xffffff : 0;
-                        *pBits = color;
-                        pBits++;
-
-                        value = value >> 1;
-                    }
-
-                    address++;
                 }
             }
         }
