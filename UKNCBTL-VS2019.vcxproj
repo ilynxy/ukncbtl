@@ -203,24 +203,24 @@
     <ClInclude Include="Views.h" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="diskette.ico" />
-    <Image Include="diskettewp.ico" />
-    <Image Include="keyboard.bmp" />
-    <Image Include="keyboardmask.bmp" />
-    <Image Include="small.ico" />
-    <Image Include="Toolbar.bmp" />
-    <Image Include="UKNC.bmp" />
-    <Image Include="UKNCBTL.ico" />
+    <Image Include="res\diskette.ico" />
+    <Image Include="res\diskettewp.ico" />
+    <Image Include="res\keyboard.bmp" />
+    <Image Include="res\keyboardmask.bmp" />
+    <Image Include="res\small.ico" />
+    <Image Include="res\Toolbar.bmp" />
+    <Image Include="res\UKNC.bmp" />
+    <Image Include="res\UKNCBTL.ico" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="manifest.xml" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="uknc_rom.bin" />
+    <None Include="res\uknc_rom.bin" />
     <None Include="Version.tpl" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="UKNCBTL.rc" />
+    <ResourceCompile Include="res\UKNCBTL.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

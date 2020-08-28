@@ -111,7 +111,9 @@ int APIENTRY _tWinMain(
         if (g_okEmulatorRunning && !Settings_GetSound())
         {
             if (Settings_GetRealSpeed() == 0)
-                ::Sleep(1);  // We should not consume 100% of CPU
+            {
+                //::Sleep(1);  // We should not consume 100% of CPU
+            }
             else
             {
                 // Slow down to 25 frames per second
