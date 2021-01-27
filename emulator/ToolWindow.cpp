@@ -17,25 +17,23 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 
 //////////////////////////////////////////////////////////////////////
 
-const int TOOLWINDOW_CAPTION_HEIGHT = 16;
-
 
 void ToolWindow_RegisterClass()
 {
     WNDCLASSEX wcex;
     wcex.cbSize = sizeof(WNDCLASSEX);
 
-    wcex.style			= CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc	= ToolWindow_WndProc;
-    wcex.cbClsExtra		= 0;
-    wcex.cbWndExtra		= 0;
-    wcex.hInstance		= g_hInst;
-    wcex.hIcon			= NULL;
-    wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground	= (HBRUSH)(COLOR_BTNFACE + 1);
-    wcex.lpszMenuName	= NULL;
-    wcex.lpszClassName	= CLASSNAME_TOOLWINDOW;
-    wcex.hIconSm		= NULL;
+    wcex.style          = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc    = ToolWindow_WndProc;
+    wcex.cbClsExtra     = 0;
+    wcex.cbWndExtra     = 0;
+    wcex.hInstance      = g_hInst;
+    wcex.hIcon          = NULL;
+    wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_BTNFACE + 1);
+    wcex.lpszMenuName   = NULL;
+    wcex.lpszClassName  = CLASSNAME_TOOLWINDOW;
+    wcex.hIconSm        = NULL;
 
     RegisterClassEx(&wcex);
 }
@@ -83,14 +81,14 @@ LRESULT CALLBACK ToolWindow_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
             ::SetBkMode(hdc, TRANSPARENT);
             ::DrawText(hdc, buffer, (int) _tcslen(buffer), &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
             ::SelectObject(hdc, hOldFont);
-            ::DeleteObject(hfont);
+            VERIFY(::DeleteObject(hfont));
 
             //RECT rcClose;
             //rcClose.right = rcWindow.right;  rcClose.top = 0;  rcClose.bottom = TOOLWINDOW_CAPTION_HEIGHT;
             //rcClose.left = rcWindow.right - 18;
             //::DrawFrameControl(hdc, &rcClose, DFC_CAPTION, DFCS_CAPTIONCLOSE | DFCS_FLAT);
 
-            ReleaseDC(hWnd, hdc);
+            VERIFY(::ReleaseDC(hWnd, hdc));
         }
         break;
     case WM_SETTEXT:
@@ -119,17 +117,17 @@ void OverlappedWindow_RegisterClass()
     WNDCLASSEX wcex;
     wcex.cbSize = sizeof(WNDCLASSEX);
 
-    wcex.style			= CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc	= DefWindowProc;
-    wcex.cbClsExtra		= 0;
-    wcex.cbWndExtra		= 0;
-    wcex.hInstance		= g_hInst;
-    wcex.hIcon			= NULL;
-    wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground	= (HBRUSH)(COLOR_BTNFACE + 1);
-    wcex.lpszMenuName	= NULL;
-    wcex.lpszClassName	= CLASSNAME_OVERLAPPEDWINDOW;
-    wcex.hIconSm		= NULL;
+    wcex.style          = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc    = DefWindowProc;
+    wcex.cbClsExtra     = 0;
+    wcex.cbWndExtra     = 0;
+    wcex.hInstance      = g_hInst;
+    wcex.hIcon          = NULL;
+    wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_BTNFACE + 1);
+    wcex.lpszMenuName   = NULL;
+    wcex.lpszClassName  = CLASSNAME_OVERLAPPEDWINDOW;
+    wcex.hIconSm        = NULL;
 
     RegisterClassEx(&wcex);
 }

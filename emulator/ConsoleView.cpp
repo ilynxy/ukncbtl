@@ -17,8 +17,8 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "Emulator.h"
 #include "emubase\Emubase.h"
 
-
 //////////////////////////////////////////////////////////////////////
+
 
 COLORREF COLOR_COMMANDFOCUS = RGB(255, 242, 157);
 
@@ -57,17 +57,17 @@ void ConsoleView_RegisterClass()
     WNDCLASSEX wcex;
     wcex.cbSize = sizeof(WNDCLASSEX);
 
-    wcex.style			= CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc	= ConsoleViewWndProc;
-    wcex.cbClsExtra		= 0;
-    wcex.cbWndExtra		= 0;
-    wcex.hInstance		= g_hInst;
-    wcex.hIcon			= NULL;
-    wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground	= (HBRUSH)(COLOR_BTNFACE + 1);
-    wcex.lpszMenuName	= NULL;
-    wcex.lpszClassName	= CLASSNAME_CONSOLEVIEW;
-    wcex.hIconSm		= NULL;
+    wcex.style          = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc    = ConsoleViewWndProc;
+    wcex.cbClsExtra     = 0;
+    wcex.cbWndExtra     = 0;
+    wcex.hInstance      = g_hInst;
+    wcex.hIcon          = NULL;
+    wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_BTNFACE + 1);
+    wcex.lpszMenuName   = NULL;
+    wcex.lpszClassName  = CLASSNAME_CONSOLEVIEW;
+    wcex.hIconSm        = NULL;
 
     RegisterClassEx(&wcex);
 }
@@ -498,6 +498,13 @@ void ConsoleView_StepOver()
     // Execute command
     ConsoleView_DoConsoleCommand();
 }
+void ConsoleView_DeleteAllBreakpoints()
+{
+    // Put command to console prompt
+    SendMessage(m_hwndConsoleEdit, WM_SETTEXT, 0, (LPARAM)_T("bc"));
+    // Execute command
+    ConsoleView_DoConsoleCommand();
+}
 
 void ConsoleView_ShowHelp()
 {
@@ -555,7 +562,6 @@ void ConsoleView_DoStepInto()
 
     ConsoleView_PrintDisassemble(pProc, pProc->GetPC(), TRUE, FALSE);
 
-    //pProc->Execute();
     g_pBoard->DebugTicks();
 
     MainWindow_UpdateAllViews();
@@ -604,6 +610,7 @@ void ConsoleView_ShowBreakpoints()
 void ConsoleView_RemoveAllBreakpoints()
 {
     Emulator_RemoveAllBreakpoints(m_okCurrentProc);
+    DebugView_Redraw();
     DisasmView_Redraw();
 }
 void ConsoleView_AddBreakpoint(WORD address)
@@ -611,6 +618,7 @@ void ConsoleView_AddBreakpoint(WORD address)
     bool result = m_okCurrentProc ? Emulator_AddCPUBreakpoint(address) : Emulator_AddPPUBreakpoint(address);
     if (!result)
         ConsoleView_Print(_T("  Failed to add breakpoint.\r\n"));
+    DebugView_Redraw();
     DisasmView_Redraw();
 }
 void ConsoleView_RemoveBreakpoint(WORD address)
@@ -618,6 +626,7 @@ void ConsoleView_RemoveBreakpoint(WORD address)
     bool result = m_okCurrentProc ? Emulator_RemoveCPUBreakpoint(address) : Emulator_RemovePPUBreakpoint(address);
     if (!result)
         ConsoleView_Print(_T("  Failed to remove breakpoint.\r\n"));
+    DebugView_Redraw();
     DisasmView_Redraw();
 }
 

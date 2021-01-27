@@ -1,11 +1,11 @@
 ﻿/*  This file is part of UKNCBTL.
-UKNCBTL is free software: you can redistribute it and/or modify it under the terms
+    UKNCBTL is free software: you can redistribute it and/or modify it under the terms
 of the GNU Lesser General Public License as published by the Free Software Foundation,
 either version 3 of the License, or (at your option) any later version.
-UKNCBTL is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+    UKNCBTL is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 See the GNU Lesser General Public License for more details.
-You should have received a copy of the GNU Lesser General Public License along with
+    You should have received a copy of the GNU Lesser General Public License along with
 UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 
 // SpriteView.cpp
@@ -18,7 +18,6 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "Dialogs.h"
 #include "Emulator.h"
 #include "emubase\Emubase.h"
-
 
 //////////////////////////////////////////////////////////////////////
 
@@ -38,11 +37,11 @@ const int m_nSprite_ImageCY = 256;
 const int m_nSprite_ViewCX = m_nSprite_ImageCX * m_nSprite_scale;
 const int m_nSprite_ViewCY = m_nSprite_ImageCY * m_nSprite_scale;
 
-
 WORD m_wSprite_BaseAddress = 0;
 int m_nSprite_width = 2;
 const int m_nSprite_format_max = 1;
 int m_nSprite_format = 0;
+int m_nSprite_PageSizeBytes = m_nSprite_ImageCY * (m_nSprite_ImageCX / (8 + 2));
 
 void SpriteView_OnDraw(HDC hdc);
 BOOL SpriteView_OnKeyDown(WPARAM vkey, LPARAM lParam);
@@ -140,7 +139,7 @@ void SpriteView_Create(int x, int y)
 void SpriteView_InitBitmap()
 {
     m_hSpriteDrawDib = DrawDibOpen();
-    HDC hdc = GetDC(g_hwnd);
+    HDC hdc = ::GetDC(g_hwnd);
 
     m_bmpinfoSprite.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     m_bmpinfoSprite.bmiHeader.biWidth = m_nSprite_ImageCX;
@@ -156,14 +155,14 @@ void SpriteView_InitBitmap()
 
     m_hSpriteBitmap = CreateDIBSection(hdc, &m_bmpinfoSprite, DIB_RGB_COLORS, (void **)&m_pSprite_bits, NULL, 0);
 
-    ReleaseDC(g_hwnd, hdc);
+    VERIFY(::ReleaseDC(g_hwnd, hdc));
 }
 
 void SpriteView_DoneBitmap()
 {
     if (m_hSpriteBitmap != NULL)
     {
-        DeleteObject(m_hSpriteBitmap);  m_hSpriteBitmap = NULL;
+        VERIFY(DeleteObject(m_hSpriteBitmap));  m_hSpriteBitmap = NULL;
     }
 
     DrawDibClose(m_hSpriteDrawDib);
@@ -284,8 +283,8 @@ BOOL SpriteView_OnKeyDown(WPARAM vkey, LPARAM /*lParam*/)
     case VK_LEFT:
     case VK_RIGHT:
         {
-            int spriteWidth = ((m_nSprite_Mode == 0) ? 1 : 2) * m_nSprite_width * (vkey == VK_LEFT ? -1 : 1);
-            SpriteView_GoToAddress(m_wSprite_BaseAddress + (WORD)(m_nSprite_ImageCY * spriteWidth));
+            int spriteMult = ((m_nSprite_Mode == 0) ? 1 : 2) * (vkey == VK_LEFT ? -1 : 1);
+            SpriteView_GoToAddress(m_wSprite_BaseAddress + (WORD)(m_nSprite_ImageCY * spriteMult * m_nSprite_width));
             break;
         }
     case VK_UP:
@@ -314,15 +313,28 @@ BOOL SpriteView_OnKeyDown(WPARAM vkey, LPARAM /*lParam*/)
         SpriteView_UpdateWindowText();
         SpriteView_PrepareBitmap();
         InvalidateRect(m_hwndSpriteViewer, NULL, TRUE);
+        SpriteView_UpdateScrollPos();
 
         break;
-    case 0x47:  // G - Go To Address
+    case 0x47:  // 'G' - Go To Address
         {
             WORD value = m_wSprite_BaseAddress;
             if (InputBoxOctal(m_hwndSpriteViewer, _T("Go To Address"), &value))
                 SpriteView_GoToAddress(value);
             break;
         }
+    case VK_HOME:
+        SpriteView_GoToAddress(0);
+        break;
+    case VK_END:
+        SpriteView_GoToAddress((WORD)(0x10000 - ((m_nSprite_Mode == 0) ? 1 : 2)));
+        break;
+    case VK_PRIOR:
+        SpriteView_GoToAddress(m_wSprite_BaseAddress - (WORD)m_nSprite_PageSizeBytes);
+        break;
+    case VK_NEXT:
+        SpriteView_GoToAddress(m_wSprite_BaseAddress + (WORD)m_nSprite_PageSizeBytes);
+        break;
     default:
         return TRUE;
     }
@@ -347,7 +359,6 @@ BOOL SpriteView_OnVScroll(WPARAM wParam, LPARAM /*lParam*/)
 {
     int spriteWidth = ((m_nSprite_Mode == 0) ? 1 : 2) * m_nSprite_width;
 
-    //WORD scrollpos = HIWORD(wParam);
     WORD scrollcmd = LOWORD(wParam);
     switch (scrollcmd)
     {
@@ -357,12 +368,19 @@ BOOL SpriteView_OnVScroll(WPARAM wParam, LPARAM /*lParam*/)
     case SB_LINEUP:
         SpriteView_GoToAddress(m_wSprite_BaseAddress - (WORD)spriteWidth);
         break;
-        //case SB_PAGEDOWN:
-        //    break;
-        //case SB_PAGEUP:
-        //    break;
-        //case SB_THUMBPOSITION:
-        //    break;
+    case SB_PAGEDOWN:
+        SpriteView_GoToAddress(m_wSprite_BaseAddress + (WORD)m_nSprite_PageSizeBytes);
+        break;
+    case SB_PAGEUP:
+        SpriteView_GoToAddress(m_wSprite_BaseAddress - (WORD)m_nSprite_PageSizeBytes);
+        break;
+    case SB_THUMBPOSITION:
+        {
+            WORD scrollpos = HIWORD(wParam);
+            if (m_nSprite_Mode != 0) scrollpos = scrollpos & ~1;
+            SpriteView_GoToAddress(scrollpos);
+        }
+        break;
     }
 
     return FALSE;
@@ -370,14 +388,27 @@ BOOL SpriteView_OnVScroll(WPARAM wParam, LPARAM /*lParam*/)
 
 void SpriteView_UpdateScrollPos()
 {
+    int columns = 0;
+    int cx = m_nSprite_ImageCX;
+    while (cx > m_nSprite_width * 8)
+    {
+        columns++;
+        cx -= m_nSprite_width * 8;
+        if (cx <= 2)
+            break;
+        cx -= 2;
+    }
+    int stepSizeBytes = ((m_nSprite_Mode == 0) ? 1 : 2);
+    m_nSprite_PageSizeBytes = m_nSprite_ImageCY * columns * m_nSprite_width * stepSizeBytes;
+
     SCROLLINFO si;
     ZeroMemory(&si, sizeof(si));
     si.cbSize = sizeof(si);
     si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE;
-    si.nPage = 0;  //TODO
+    si.nPage = m_nSprite_PageSizeBytes;
     si.nPos = m_wSprite_BaseAddress;
     si.nMin = 0;
-    si.nMax = 0x10000 - 1;
+    si.nMax = 0x10000 - stepSizeBytes + m_nSprite_PageSizeBytes;
     SetScrollInfo(m_hwndSpriteViewer, SB_VERT, &si, TRUE);
 }
 

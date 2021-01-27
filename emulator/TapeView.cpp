@@ -19,8 +19,8 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "Emulator.h"
 #include "Dialogs.h"
 
-
 //////////////////////////////////////////////////////////////////////
+
 
 LPCTSTR g_sOpenWav = _T("Open WAV");
 LPCTSTR g_sSaveWav = _T("Save WAV");
@@ -80,17 +80,17 @@ void TapeView_RegisterClass()
     WNDCLASSEX wcex;
     wcex.cbSize = sizeof(WNDCLASSEX);
 
-    wcex.style			= CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc	= TapeViewWndProc;
-    wcex.cbClsExtra		= 0;
-    wcex.cbWndExtra		= 0;
-    wcex.hInstance		= g_hInst;
-    wcex.hIcon			= NULL;
-    wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground	= (HBRUSH)(COLOR_BTNFACE + 1);
-    wcex.lpszMenuName	= NULL;
-    wcex.lpszClassName	= CLASSNAME_TAPEVIEW;
-    wcex.hIconSm		= NULL;
+    wcex.style          = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc    = TapeViewWndProc;
+    wcex.cbClsExtra     = 0;
+    wcex.cbWndExtra     = 0;
+    wcex.hInstance      = g_hInst;
+    wcex.hIcon          = NULL;
+    wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_BTNFACE + 1);
+    wcex.lpszMenuName   = NULL;
+    wcex.lpszClassName  = CLASSNAME_TAPEVIEW;
+    wcex.hIconSm        = NULL;
 
     RegisterClassEx(&wcex);
 }
@@ -436,9 +436,7 @@ BOOL CALLBACK TapeView_TapeReadCallback(unsigned int samples)
         TapeView_UpdatePosition();
     }
 
-//#if !defined(PRODUCT)
 //    DebugPrintFormat(_T("Tape: %d\r\n"), result);
-//#endif
 
     return result;
 }

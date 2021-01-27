@@ -15,9 +15,9 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 //////////////////////////////////////////////////////////////////////
 
 #ifdef _DEBUG
-#define UKNCBTL_VERSION_STRING "DEBUG"
+#define APP_VERSION_STRING "DEBUG"
 #elif !defined(PRODUCT)
-#define UKNCBTL_VERSION_STRING "RELEASE"
+#define APP_VERSION_STRING "RELEASE"
 #else
 #include "Version.h"
 #endif
@@ -51,16 +51,12 @@ BOOL AlertOkCancel(LPCTSTR sMessage);
 //////////////////////////////////////////////////////////////////////
 // DebugPrint
 
-#if !defined(PRODUCT)
-
 void DebugPrint(LPCTSTR message);
 void DebugPrintFormat(LPCTSTR pszFormat, ...);
 void DebugLogClear();
 void DebugLogCloseFile();
 void DebugLog(LPCTSTR message);
 void DebugLogFormat(LPCTSTR pszFormat, ...);
-
-#endif // !defined(PRODUCT)
 
 
 //////////////////////////////////////////////////////////////////////

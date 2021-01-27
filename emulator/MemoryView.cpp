@@ -19,7 +19,6 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "Emulator.h"
 #include "emubase\Emubase.h"
 
-
 //////////////////////////////////////////////////////////////////////
 
 
@@ -57,17 +56,17 @@ void MemoryView_RegisterClass()
     WNDCLASSEX wcex;
     wcex.cbSize = sizeof(WNDCLASSEX);
 
-    wcex.style			= CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc	= MemoryViewViewerWndProc;
-    wcex.cbClsExtra		= 0;
-    wcex.cbWndExtra		= 0;
-    wcex.hInstance		= g_hInst;
-    wcex.hIcon			= NULL;
-    wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW + 1);
-    wcex.lpszMenuName	= NULL;
-    wcex.lpszClassName	= CLASSNAME_MEMORYVIEW;
-    wcex.hIconSm		= NULL;
+    wcex.style          = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc    = MemoryViewViewerWndProc;
+    wcex.cbClsExtra     = 0;
+    wcex.cbWndExtra     = 0;
+    wcex.hInstance      = g_hInst;
+    wcex.hIcon          = NULL;
+    wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW + 1);
+    wcex.lpszMenuName   = NULL;
+    wcex.lpszClassName  = CLASSNAME_MEMORYVIEW;
+    wcex.hIconSm        = NULL;
 
     RegisterClassEx(&wcex);
 }
@@ -339,7 +338,7 @@ void MemoryView_OnDraw(HDC hdc)
     SetTextColor(hdc, colorOld);
     SetBkColor(hdc, colorBkOld);
     SelectObject(hdc, hOldFont);
-    DeleteObject(hFont);
+    VERIFY(DeleteObject(hFont));
 
     if (::GetFocus() == m_hwndMemoryViewer)
     {
@@ -356,9 +355,11 @@ void MemoryView_UpdateToolbar()
     int command = ID_DEBUG_MEMORY_RAM;
     switch (m_Mode)
     {
-    case MEMMODE_RAM0: command = ID_DEBUG_MEMORY_RAM; break;
-    case MEMMODE_RAM1: command = ID_DEBUG_MEMORY_RAM; break;
-    case MEMMODE_RAM2: command = ID_DEBUG_MEMORY_RAM; break;
+    case MEMMODE_RAM0:
+    case MEMMODE_RAM1:
+    case MEMMODE_RAM2:
+        command = ID_DEBUG_MEMORY_RAM;
+        break;
     case MEMMODE_ROM:  command = ID_DEBUG_MEMORY_ROM;  break;
     case MEMMODE_CPU:  command = ID_DEBUG_MEMORY_CPU;  break;
     case MEMMODE_PPU:  command = ID_DEBUG_MEMORY_PPU;  break;
@@ -541,5 +542,6 @@ void MemoryView_UpdateScrollPos()
     si.nMax = 0x10000 / 16 - 1;
     SetScrollInfo(m_hwndMemoryViewer, SB_VERT, &si, TRUE);
 }
+
 
 //////////////////////////////////////////////////////////////////////

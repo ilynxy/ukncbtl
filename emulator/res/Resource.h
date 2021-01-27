@@ -9,9 +9,9 @@
 #define IDM_ABOUT                       104
 #define IDS_WELCOME                     104
 #define IDM_EXIT                        105
-#define IDI_UKNCBTL                     107
+#define IDI_APPICON                     107
 #define IDI_SMALL                       108
-#define IDC_UKNCBTL                     109
+#define IDC_APPLICATION                 109
 #define IDR_MAINFRAME                   128
 #define IDD_INPUTBOX                    129
 #define IDI_DISKETTE                    138
@@ -53,6 +53,7 @@
 #define IDC_SCREENSHOTMODE              1031
 #define IDC_SYSLINK1                    1032
 #define IDC_VERSION                     1033
+#define IDC_COMBO1                      1034
 #define ID_FILE                         32771
 #define ID_FILE_SAVESTATE               32772
 #define ID_FILE_LOADSTATE               32773
@@ -128,6 +129,9 @@
 #define ID_DEBUG_MEMORY_RAM             32893
 #define ID_DEBUG_MEMORY_WORDBYTE        32894
 #define ID_DEBUG_MEMORY_GOTO            32895
+#define ID_DEBUG_CLEARCONSOLE           32896
+#define ID_DEBUG_DELETEALLBREAKPTS      32897
+#define ID_DEBUG_SUBTITLES              32898
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -136,8 +140,8 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        152
-#define _APS_NEXT_COMMAND_VALUE         32896
-#define _APS_NEXT_CONTROL_VALUE         1034
+#define _APS_NEXT_COMMAND_VALUE         32899
+#define _APS_NEXT_CONTROL_VALUE         1035
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

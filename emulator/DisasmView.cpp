@@ -20,7 +20,6 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "Emulator.h"
 #include "emubase\Emubase.h"
 
-
 //////////////////////////////////////////////////////////////////////
 
 
@@ -37,8 +36,6 @@ int  DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, WORD base, WORD prev
 void DisasmView_UpdateWindowText();
 BOOL DisasmView_OnKeyDown(WPARAM vkey, LPARAM lParam);
 void DisasmView_OnLButtonDown(WPARAM wParam, LPARAM lParam);
-void DisasmView_SetBaseAddr(WORD base);
-void DisasmView_DoSubtitles();
 BOOL DisasmView_ParseSubtitles();
 
 enum DisasmSubtitleType
@@ -102,17 +99,17 @@ void DisasmView_RegisterClass()
     WNDCLASSEX wcex;
     wcex.cbSize = sizeof(WNDCLASSEX);
 
-    wcex.style			= CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc	= DisasmViewViewerWndProc;
-    wcex.cbClsExtra		= 0;
-    wcex.cbWndExtra		= 0;
-    wcex.hInstance		= g_hInst;
-    wcex.hIcon			= NULL;
-    wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW + 1);
-    wcex.lpszMenuName	= NULL;
-    wcex.lpszClassName	= CLASSNAME_DISASMVIEW;
-    wcex.hIconSm		= NULL;
+    wcex.style          = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc    = DisasmViewViewerWndProc;
+    wcex.cbClsExtra     = 0;
+    wcex.cbWndExtra     = 0;
+    wcex.hInstance      = g_hInst;
+    wcex.hIcon          = NULL;
+    wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW + 1);
+    wcex.lpszMenuName   = NULL;
+    wcex.lpszClassName  = CLASSNAME_DISASMVIEW;
+    wcex.hIconSm        = NULL;
 
     RegisterClassEx(&wcex);
 }
@@ -239,7 +236,7 @@ BOOL DisasmView_OnKeyDown(WPARAM vkey, LPARAM /*lParam*/)
         DebugView_SetCurrentProc(m_okDisasmProcessor);   // Switch DebugView to current processor
         break;
     case 0x53:  // S - Load/Unload Subtitles
-        DisasmView_DoSubtitles();
+        DisasmView_LoadUnloadSubtitles();
         break;
     case VK_ESCAPE:
         ConsoleView_Activate();
@@ -276,6 +273,7 @@ void DisasmView_OnLButtonDown(WPARAM /*wParam*/, LPARAM lParam)
                     if (!result)
                         AlertWarningFormat(_T("Failed to remove breakpoint at %06ho."), address);
                 }
+                DebugView_Redraw();
                 DisasmView_Redraw();
             }
         }
@@ -323,7 +321,7 @@ void DisasmView_AddSubtitle(WORD address, int type, LPCTSTR pCommentText)
     m_nDisasmSubtitleCount++;
 }
 
-void DisasmView_DoSubtitles()
+void DisasmView_LoadUnloadSubtitles()
 {
     if (m_okDisasmSubtitles)  // Reset subtitles
     {
@@ -507,12 +505,6 @@ void DisasmView_SetCurrentProc(BOOL okCPU)
     InvalidateRect(m_hwndDisasmViewer, NULL, TRUE);
     DisasmView_UpdateWindowText();
     DisasmView_OnUpdate();  // We have to re-build the list of lines to show
-}
-
-void DisasmView_SetBaseAddr(WORD base)
-{
-    m_wDisasmBaseAddr = base;
-    InvalidateRect(m_hwndDisasmViewer, NULL, TRUE);
 }
 
 BOOL DisasmView_CheckForJump(const WORD* memory, int* pDelta)
@@ -1082,7 +1074,7 @@ void DisasmView_DrawJump(HDC hdc, int yFrom, int delta, int x, int cyLine, COLOR
     LineTo(hdc, x + 4, yTo + 1);
 
     ::SelectObject(hdc, oldPen);
-    ::DeleteObject(hPenJump);
+    VERIFY(::DeleteObject(hPenJump));
 }
 
 void DisasmView_DoDraw(HDC hdc)
@@ -1106,7 +1098,7 @@ void DisasmView_DoDraw(HDC hdc)
     SetTextColor(hdc, colorOld);
     //SetBkColor(hdc, colorBkOld);
     SelectObject(hdc, hOldFont);
-    DeleteObject(hFont);
+    VERIFY(DeleteObject(hFont));
 
     if (::GetFocus() == m_hwndDisasmViewer)
     {
@@ -1130,7 +1122,7 @@ void DisasmView_DrawBreakpoint(HDC hdc, int x, int y, int size)
     Ellipse(hdc, x, y, x + size, y + size);
     ::SelectObject(hdc, hOldPen);
     ::SelectObject(hdc, hOldBrush);
-    ::DeleteObject(hBreakBrush);
+    VERIFY(::DeleteObject(hBreakBrush));
 }
 
 int DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, WORD current, WORD previous, int x, int y)
@@ -1159,7 +1151,7 @@ int DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, WORD current, WORD pr
         HGDIOBJ oldBrush = ::SelectObject(hdc, hBrushCurrent);
         PatBlt(hdc, 0, yCurrent, 1000, cyLine, PATCOPY);
         ::SelectObject(hdc, oldBrush);
-        ::DeleteObject(hBrushCurrent);
+        VERIFY(::DeleteObject(hBrushCurrent));
     }
 
     for (int lineindex = 0; lineindex < MAX_DISASMLINECOUNT; lineindex++)  // Draw the lines

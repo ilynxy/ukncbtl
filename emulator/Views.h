@@ -16,14 +16,17 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 //////////////////////////////////////////////////////////////////////
 // Window class names
 
-const LPCTSTR CLASSNAME_SCREENVIEW  = _T("UKNCBTLSCREEN");
-const LPCTSTR CLASSNAME_KEYBOARDVIEW = _T("UKNCBTLKEYBOARD");
-const LPCTSTR CLASSNAME_DEBUGVIEW   = _T("UKNCBTLDEBUG");
-const LPCTSTR CLASSNAME_DISASMVIEW  = _T("UKNCBTLDISASM");
-const LPCTSTR CLASSNAME_MEMORYVIEW  = _T("UKNCBTLMEMORY");
-const LPCTSTR CLASSNAME_SPRITEVIEW  = _T("UKNCBTLSPRITE");
-const LPCTSTR CLASSNAME_CONSOLEVIEW = _T("UKNCBTLCONSOLE");
-const LPCTSTR CLASSNAME_TAPEVIEW    = _T("UKNCBTLTAPE");
+#define CLASSNAMEPREFIX _T("UKNCBTL")
+
+const LPCTSTR CLASSNAME_SCREENVIEW      = CLASSNAMEPREFIX _T("SCREEN");
+const LPCTSTR CLASSNAME_KEYBOARDVIEW    = CLASSNAMEPREFIX _T("KEYBOARD");
+const LPCTSTR CLASSNAME_DEBUGVIEW       = CLASSNAMEPREFIX _T("DEBUG");
+const LPCTSTR CLASSNAME_DISASMVIEW      = CLASSNAMEPREFIX _T("DISASM");
+const LPCTSTR CLASSNAME_MEMORYVIEW      = CLASSNAMEPREFIX _T("MEMORY");
+const LPCTSTR CLASSNAME_MEMORYMAPVIEW   = CLASSNAMEPREFIX _T("MEMORYMAP");
+const LPCTSTR CLASSNAME_SPRITEVIEW      = CLASSNAMEPREFIX _T("SPRITE");
+const LPCTSTR CLASSNAME_CONSOLEVIEW     = CLASSNAMEPREFIX _T("CONSOLE");
+const LPCTSTR CLASSNAME_TAPEVIEW        = CLASSNAMEPREFIX _T("TAPE");
 
 
 //////////////////////////////////////////////////////////////////////
@@ -78,6 +81,7 @@ extern HWND g_hwndDebug;  // Debug View window handle
 void DebugView_RegisterClass();
 void DebugView_Init();
 void DebugView_Create(HWND hwndParent, int x, int y, int width, int height);
+void DebugView_Redraw();
 LRESULT CALLBACK DebugViewWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK DebugViewViewerWndProc(HWND, UINT, WPARAM, LPARAM);
 void DebugView_OnUpdate();
@@ -99,6 +103,7 @@ LRESULT CALLBACK DisasmViewWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK DisasmViewViewerWndProc(HWND, UINT, WPARAM, LPARAM);
 void DisasmView_OnUpdate();
 void DisasmView_SetCurrentProc(BOOL okCPU);
+void DisasmView_LoadUnloadSubtitles();
 
 
 //////////////////////////////////////////////////////////////////////
@@ -152,6 +157,8 @@ void ConsoleView_Activate();
 void ConsoleView_SetCurrentProc(BOOL okCPU);
 void ConsoleView_StepInto();
 void ConsoleView_StepOver();
+void ConsoleView_ClearConsole();
+void ConsoleView_DeleteAllBreakpoints();
 
 
 //////////////////////////////////////////////////////////////////////

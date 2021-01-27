@@ -9,7 +9,6 @@ See the GNU Lesser General Public License for more details.
 UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 
 // MainWindow.cpp
-//
 
 #include "stdafx.h"
 #include <commdlg.h>
@@ -21,7 +20,6 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "Views.h"
 #include "ToolWindow.h"
 #include "util\BitmapFile.h"
-
 
 //////////////////////////////////////////////////////////////////////
 
@@ -101,10 +99,10 @@ void MainWindow_RegisterClass()
     wcex.cbClsExtra     = 0;
     wcex.cbWndExtra     = 0;
     wcex.hInstance      = g_hInst;
-    wcex.hIcon          = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_UKNCBTL));
+    wcex.hIcon          = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_APPICON));
     wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)(COLOR_BTNFACE + 1);
-    wcex.lpszMenuName   = MAKEINTRESOURCE(IDC_UKNCBTL);
+    wcex.lpszMenuName   = MAKEINTRESOURCE(IDC_APPLICATION);
     wcex.lpszClassName  = g_szWindowClass;
     wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
@@ -282,7 +280,7 @@ BOOL MainWindow_InitStatusbar()
     TCHAR welcomeTemplate[100];
     LoadString(g_hInst, IDS_WELCOME, welcomeTemplate, 100);
     TCHAR buffer[100];
-    wsprintf(buffer, welcomeTemplate, _T(UKNCBTL_VERSION_STRING));
+    wsprintf(buffer, welcomeTemplate, _T(APP_VERSION_STRING));
     m_hwndStatusbar = CreateStatusWindow(
             WS_CHILD | WS_VISIBLE | SBT_TOOLTIPS | CCS_NOPARENTALIGN | CCS_NODIVIDER,
             buffer,
@@ -841,9 +839,8 @@ void MainWindow_UpdateMenu()
     CheckMenuItem(hMenu, ID_EMULATOR_RUN, (g_okEmulatorRunning ? MF_CHECKED : MF_UNCHECKED));
     SendMessage(m_hwndToolbar, TB_CHECKBUTTON, ID_EMULATOR_RUN, (g_okEmulatorRunning ? 1 : 0));
 
-    // View|Debug check
+    // View menu
     CheckMenuItem(hMenu, ID_VIEW_TOOLBAR, (Settings_GetToolbar() ? MF_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(hMenu, ID_VIEW_DEBUG, (Settings_GetDebug() ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hMenu, ID_VIEW_KEYBOARD, (Settings_GetKeyboard() ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hMenu, ID_VIEW_TAPE, (Settings_GetTape() ? MF_CHECKED : MF_UNCHECKED));
 
@@ -920,6 +917,17 @@ void MainWindow_UpdateMenu()
             g_pBoard->IsHardImageAttached(1) ? (g_pBoard->IsHardImageReadOnly(1) ? ToolbarImageHardDriveWP : ToolbarImageHardDrive) : ToolbarImageHardSlot);
     MainWindow_SetToolbarImage(ID_EMULATOR_HARDDRIVE2,
             g_pBoard->IsHardImageAttached(2) ? (g_pBoard->IsHardImageReadOnly(2) ? ToolbarImageHardDriveWP : ToolbarImageHardDrive) : ToolbarImageHardSlot);
+
+    // Debug menu
+    BOOL okDebug = Settings_GetDebug();
+    CheckMenuItem(hMenu, ID_VIEW_DEBUG, (okDebug ? MF_CHECKED : MF_UNCHECKED));
+    EnableMenuItem(hMenu, ID_DEBUG_CPUPPU, (okDebug ? MF_ENABLED : MF_DISABLED));
+    EnableMenuItem(hMenu, ID_DEBUG_SPRITES, (okDebug ? MF_ENABLED : MF_DISABLED));
+    EnableMenuItem(hMenu, ID_DEBUG_SUBTITLES, (okDebug ? MF_ENABLED : MF_DISABLED));
+    EnableMenuItem(hMenu, ID_DEBUG_STEPINTO, (okDebug ? MF_ENABLED : MF_DISABLED));
+    EnableMenuItem(hMenu, ID_DEBUG_STEPOVER, (okDebug ? MF_ENABLED : MF_DISABLED));
+    EnableMenuItem(hMenu, ID_DEBUG_CLEARCONSOLE, (okDebug ? MF_ENABLED : MF_DISABLED));
+    EnableMenuItem(hMenu, ID_DEBUG_DELETEALLBREAKPTS, (okDebug ? MF_ENABLED : MF_DISABLED));
 }
 
 void MainWindow_UpdateRenderModeMenu()
@@ -959,14 +967,38 @@ bool MainWindow_DoCommand(int commandId)
 {
     switch (commandId)
     {
-    case IDM_ABOUT:
-        ShowAboutBox();
+    case ID_FILE_LOADSTATE:
+        MainWindow_DoFileLoadState();
+        break;
+    case ID_FILE_SAVESTATE:
+        MainWindow_DoFileSaveState();
+        break;
+    case ID_FILE_SCREENSHOT:
+        MainWindow_DoFileScreenshot();
+        break;
+    case ID_FILE_SCREENSHOTTOCLIPBOARD:
+        MainWindow_DoFileScreenshotToClipboard();
+        break;
+    case ID_FILE_SAVESCREENSHOTAS:
+        MainWindow_DoFileScreenshotSaveAs();
+        break;
+    case ID_FILE_SCREENTOCLIPBOARD:
+        MainWindow_DoFileScreenToClipboard();
+        break;
+    case ID_FILE_CREATEDISK:
+        MainWindow_DoFileCreateDisk();
+        break;
+    case ID_FILE_SETTINGS:
+        MainWindow_DoFileSettings();
+        break;
+    case ID_FILE_SETTINGS_COLORS:
+        MainWindow_DoFileSettingsColors();
+        break;
+    case ID_FILE_SETTINGS_OSD:
+        MainWindow_DoFileSettingsOsd();
         break;
     case IDM_EXIT:
         DestroyWindow(g_hwnd);
-        break;
-    case ID_VIEW_DEBUG:
-        MainWindow_DoViewDebug();
         break;
     case ID_VIEW_TOOLBAR:
         MainWindow_DoViewToolbar();
@@ -986,53 +1018,20 @@ bool MainWindow_DoCommand(int commandId)
     case ID_VIEW_GRAYSCREEN:
         MainWindow_DoViewScreenMode(GrayScreen);
         break;
-    case ID_VIEW_FULLSCREEN:
-        MainWindow_DoViewFullscreen();
-        break;
     case ID_VIEW_ONSCREENDISPLAY:
         MainWindow_DoViewOnScreenDisplay();
         break;
     case ID_EMULATOR_RUN:
         MainWindow_DoEmulatorRun();
         break;
+    case ID_EMULATOR_RESET:
+        MainWindow_DoEmulatorReset();
+        break;
     case ID_EMULATOR_AUTOSTART:
         MainWindow_DoEmulatorAutostart();
         break;
-    case ID_DEBUG_STEPINTO:
-        if (!g_okEmulatorRunning && Settings_GetDebug())
-            ConsoleView_StepInto();
-        break;
-    case ID_DEBUG_STEPOVER:
-        if (!g_okEmulatorRunning && Settings_GetDebug())
-            ConsoleView_StepOver();
-        break;
-    case ID_DEBUG_CPUPPU:
-        if (!g_okEmulatorRunning && Settings_GetDebug())
-            DebugView_SwitchCpuPpu();
-        break;
-    case ID_DEBUG_SPRITES:
-        MainWindow_DoViewSpriteViewer();
-        break;
-    case ID_DEBUG_MEMORY_ROM:
-        MemoryView_SetViewMode(MEMMODE_ROM);
-        break;
-    case ID_DEBUG_MEMORY_CPU:
-        MemoryView_SetViewMode(MEMMODE_CPU);
-        break;
-    case ID_DEBUG_MEMORY_PPU:
-        MemoryView_SetViewMode(MEMMODE_PPU);
-        break;
-    case ID_DEBUG_MEMORY_RAM:
-        MemoryView_SwitchRamMode();
-        break;
-    case ID_DEBUG_MEMORY_WORDBYTE:
-        MemoryView_SwitchWordByte();
-        break;
-    case ID_DEBUG_MEMORY_GOTO:
-        MemoryView_SelectAddress();
-        break;
-    case ID_EMULATOR_RESET:
-        MainWindow_DoEmulatorReset();
+    case ID_EMULATOR_SOUND:
+        MainWindow_DoEmulatorSound();
         break;
     case ID_EMULATOR_SPEED25:
         MainWindow_DoEmulatorSpeed(0x7ffe);
@@ -1048,9 +1047,6 @@ bool MainWindow_DoCommand(int commandId)
         break;
     case ID_EMULATOR_SPEED200:
         MainWindow_DoEmulatorSpeed(2);
-        break;
-    case ID_EMULATOR_SOUND:
-        MainWindow_DoEmulatorSound();
         break;
     case ID_EMULATOR_SERIAL:
         MainWindow_DoEmulatorSerial();
@@ -1085,35 +1081,58 @@ bool MainWindow_DoCommand(int commandId)
     case ID_EMULATOR_HARDDRIVE2:
         MainWindow_DoEmulatorHardDrive(2);
         break;
-    case ID_FILE_LOADSTATE:
-        MainWindow_DoFileLoadState();
+    case ID_VIEW_DEBUG:
+        MainWindow_DoViewDebug();
         break;
-    case ID_FILE_SAVESTATE:
-        MainWindow_DoFileSaveState();
+    case ID_DEBUG_CPUPPU:
+        if (!g_okEmulatorRunning && Settings_GetDebug())
+            DebugView_SwitchCpuPpu();
         break;
-    case ID_FILE_SCREENSHOT:
-        MainWindow_DoFileScreenshot();
+    case ID_DEBUG_SPRITES:
+        MainWindow_DoViewSpriteViewer();
         break;
-    case ID_FILE_SCREENSHOTTOCLIPBOARD:
-        MainWindow_DoFileScreenshotToClipboard();
+    case ID_DEBUG_STEPINTO:
+        if (!g_okEmulatorRunning && Settings_GetDebug())
+            ConsoleView_StepInto();
         break;
-    case ID_FILE_SAVESCREENSHOTAS:
-        MainWindow_DoFileScreenshotSaveAs();
+    case ID_DEBUG_STEPOVER:
+        if (!g_okEmulatorRunning && Settings_GetDebug())
+            ConsoleView_StepOver();
         break;
-    case ID_FILE_SCREENTOCLIPBOARD:
-        MainWindow_DoFileScreenToClipboard();
+    case ID_DEBUG_CLEARCONSOLE:
+        if (Settings_GetDebug())
+            ConsoleView_ClearConsole();
         break;
-    case ID_FILE_CREATEDISK:
-        MainWindow_DoFileCreateDisk();
+    case ID_DEBUG_DELETEALLBREAKPTS:
+        if (Settings_GetDebug())
+            ConsoleView_DeleteAllBreakpoints();
         break;
-    case ID_FILE_SETTINGS:
-        MainWindow_DoFileSettings();
+    case ID_DEBUG_SUBTITLES:
+        DisasmView_LoadUnloadSubtitles();
         break;
-    case ID_FILE_SETTINGS_COLORS:
-        MainWindow_DoFileSettingsColors();
+    case ID_DEBUG_MEMORY_ROM:
+        MemoryView_SetViewMode(MEMMODE_ROM);
         break;
-    case ID_FILE_SETTINGS_OSD:
-        MainWindow_DoFileSettingsOsd();
+    case ID_DEBUG_MEMORY_CPU:
+        MemoryView_SetViewMode(MEMMODE_CPU);
+        break;
+    case ID_DEBUG_MEMORY_PPU:
+        MemoryView_SetViewMode(MEMMODE_PPU);
+        break;
+    case ID_DEBUG_MEMORY_RAM:
+        MemoryView_SwitchRamMode();
+        break;
+    case ID_DEBUG_MEMORY_WORDBYTE:
+        MemoryView_SwitchWordByte();
+        break;
+    case ID_DEBUG_MEMORY_GOTO:
+        MemoryView_SelectAddress();
+        break;
+    case IDM_ABOUT:
+        ShowAboutBox();
+        break;
+    case ID_VIEW_FULLSCREEN:
+        MainWindow_DoViewFullscreen();
         break;
     default:
         if (commandId >= ID_VIEW_RENDERMODE && commandId < ID_VIEW_RENDERMODE + 32)
@@ -1644,7 +1663,7 @@ void MainWindow_OnStatusbarDrawItem(LPDRAWITEMSTRUCT lpDrawItem)
         int left = lpDrawItem->rcItem.right - 16 - 2; // lpDrawItem->rcItem.left + (lpDrawItem->rcItem.right - lpDrawItem->rcItem.left - 16) / 2;
         int top = lpDrawItem->rcItem.top + (lpDrawItem->rcItem.bottom - lpDrawItem->rcItem.top - 16) / 2;
         ::DrawIconEx(hdc, left, top, hicon, 16, 16, 0, NULL, DI_NORMAL);
-        ::DeleteObject(hicon);
+        VERIFY(::DeleteObject(hicon));
     }
 }
 

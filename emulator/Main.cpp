@@ -9,7 +9,6 @@ See the GNU Lesser General Public License for more details.
 UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 
 // UKNCBTL.cpp : Defines the entry point for the application.
-//
 
 #include "stdafx.h"
 #include <crtdbg.h>
@@ -20,7 +19,6 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "Emulator.h"
 #include "Dialogs.h"
 #include "Views.h"
-
 
 //////////////////////////////////////////////////////////////////////
 // Global Variables
@@ -63,14 +61,14 @@ int APIENTRY _tWinMain(
 
     // Initialize global strings
     LoadString(g_hInst, IDS_APP_TITLE, g_szTitle, MAX_LOADSTRING);
-    LoadString(g_hInst, IDC_UKNCBTL, g_szWindowClass, MAX_LOADSTRING);
+    LoadString(g_hInst, IDC_APPLICATION, g_szWindowClass, MAX_LOADSTRING);
     MainWindow_RegisterClass();
 
     // Perform application initialization
     if (! InitInstance(hInstance, nCmdShow))
         return FALSE;
 
-    HACCEL hAccelTable = ::LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_UKNCBTL));
+    HACCEL hAccelTable = ::LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_APPLICATION));
 
     LARGE_INTEGER nPerformanceFrequency;
     ::QueryPerformanceFrequency(&nPerformanceFrequency);
