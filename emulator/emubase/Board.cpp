@@ -671,7 +671,8 @@ bool CMotherboard::SystemFrame()
     int frameticks = 0;  // 20000 ticks
     const int audioticks = 20286 / (SAMPLERATE / 25);
     m_SoundChanges = 0;
-    const int serialOutTicks = 20000 / (9600 / 25);
+    const int serialOutTicks = 7; // 20000 / (9600 / 25);
+    const int serialInTicks = 7; // 20000 / (9600 / 25);
     int serialTxCount = 0;
     const int networkOutTicks = 7; //20000 / (57600 / 25);
     int networkTxCount = 0;
@@ -796,10 +797,13 @@ bool CMotherboard::SystemFrame()
             }
         }
 
-        if (m_SerialInCallback != nullptr && frameticks % 416 == 0)
+        if (m_SerialInCallback != nullptr && ((frameticks % serialInTicks) == 0))
         {
             CFirstMemoryController* pMemCtl = static_cast<CFirstMemoryController*>(m_pFirstMemCtl);
-            if ((pMemCtl->m_Port176574 & 004) == 0)  // Not loopback?
+            if (
+                ((pMemCtl->m_Port176574 & 004) == 0) &&  // Not loopback?
+                ((pMemCtl->m_Port176570 & 0200) == 0) // Ready for receive?
+               )
             {
                 uint8_t b;
                 if (m_SerialInCallback(&b))
@@ -809,7 +813,7 @@ bool CMotherboard::SystemFrame()
                 }
             }
         }
-        if (m_SerialOutCallback != nullptr && frameticks % serialOutTicks == 0)
+        if (m_SerialOutCallback != nullptr && ((frameticks % serialOutTicks) == 0))
         {
             CFirstMemoryController* pMemCtl = static_cast<CFirstMemoryController*>(m_pFirstMemCtl);
             if (serialTxCount > 0)
@@ -1630,7 +1634,7 @@ void TraceInstruction(CProcessor* pProc, CMotherboard* /*pBoard*/)
     TCHAR args[32];
     DisassembleInstruction(memory, address, instr, args);
     TCHAR buffer[64];
-    _sntprintf(buffer, sizeof(buffer), _T("%s\t%s\t%s\r\n"), bufaddr, instr, args);
+    _sntprintf(buffer, sizeof(buffer)/sizeof(buffer[0]), _T("%s\t%s\t%s\r\n"), bufaddr, instr, args);
 
     DebugLog(buffer);
 }
