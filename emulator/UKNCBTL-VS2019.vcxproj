@@ -222,6 +222,17 @@
   <ItemGroup>
     <ResourceCompile Include="res\UKNCBTL.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\ukncbtl-renders\RenderDX9\RenderDX9-VS2019.vcxproj">
+      <Project>{049806de-9954-4d31-a5c7-b47e59502aaa}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\ukncbtl-renders\RenderOpenGL\RenderOpenGL-VS2019.vcxproj">
+      <Project>{eaa60e39-5d83-44f0-b150-9790a839a2e8}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\ukncbtl-renders\RenderVfw\RenderVfw-VS2019.vcxproj">
+      <Project>{451e4bd1-461c-4a30-8daf-9f7ec05498d2}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
