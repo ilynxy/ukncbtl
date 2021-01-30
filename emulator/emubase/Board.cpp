@@ -904,7 +904,7 @@ bool CMotherboard::SystemFrame()
 
         frameticks++;
     }
-    while (frameticks < 20000);
+    while (frameticks < 10000);
 
     return true;
 }

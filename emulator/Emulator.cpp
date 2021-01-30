@@ -691,8 +691,9 @@ bool Emulator_SystemFrame()
     uint32_t nTicksElapsed = dwCurrentTicks - m_dwTickCount;
     if (nTicksElapsed >= 1000)
     {
+        const double requiredFPS = 50.0;
         double dFramesPerSecond = m_nFrameCount * 1000.0 / nTicksElapsed;
-        double dSpeed = dFramesPerSecond / 25.0 * 100;
+        double dSpeed = dFramesPerSecond / requiredFPS * 100;
         TCHAR buffer[16];
         _stprintf(buffer, _T("%03.f%%"), dSpeed);
         MainWindow_SetStatusbarText(StatusbarPartFPS, buffer);
@@ -704,9 +705,9 @@ bool Emulator_SystemFrame()
         m_dwTickCount = dwCurrentTicks;
     }
 
-    // Calculate emulator uptime (25 frames per second)
+    // Calculate emulator uptime (50 frames per second)
     m_nUptimeFrameCount++;
-    if (m_nUptimeFrameCount >= 25)
+    if (m_nUptimeFrameCount >= 50)
     {
         m_dwEmulatorUptime++;
         m_nUptimeFrameCount = 0;
