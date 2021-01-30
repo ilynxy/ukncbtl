@@ -14,6 +14,7 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 #include <crtdbg.h>
 #include <commctrl.h>
 #include <shellapi.h>
+#include <timeapi.h>
 
 #include "Main.h"
 #include "Emulator.h"
@@ -72,6 +73,11 @@ int APIENTRY _tWinMain(
 
     LARGE_INTEGER nPerformanceFrequency;
     ::QueryPerformanceFrequency(&nPerformanceFrequency);
+
+    TIMECAPS caps;
+    MMRESULT res;
+    res = ::timeGetDevCaps(&caps, sizeof(caps));
+    res = ::timeBeginPeriod(caps.wPeriodMin);
 
     // Main message loop
     MSG msg;
@@ -145,6 +151,8 @@ endprog:
     if (_CrtDumpMemoryLeaks())
         ::MessageBeep(MB_ICONEXCLAMATION);
 #endif
+
+   ::timeEndPeriod(caps.wPeriodMin);
 
     return (int) msg.wParam;
 }
