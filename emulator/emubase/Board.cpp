@@ -292,6 +292,8 @@ void CMotherboard::Reset ()
     m_timerflags = 0;
     m_timerdivider = 0;
 
+    m_floppyticks = 0;
+
     m_chan0disabled = 0;
 
     m_scanned_key = 0;
@@ -647,10 +649,10 @@ void CMotherboard::DebugTicks()
 }
 
 /*
-Каждый фрейм равен 1/25 секунды = 40 мс = 20000 тиков, 1 тик = 2 мкс.
+Каждый фрейм равен 1/50 секунды = 20 мс = 10000 тиков, 1 тик = 2 мкс.
 
-* 20000 тиков системного таймера - на каждый 1-й тик
-* 2 сигнала EVNT, в 0-й и 10000-й тик фрейма
+* 10000 тиков системного таймера - на каждый 1-й тик
+* 1 сигнала EVNT, в 0-й и 10000-й тик фрейма
 * 320000 тиков ЦП - 16 раз за один тик
 * 250000 тиков ПП - 12.5 раз за один тик
 * Отрисовка 288 видимых строк, по 32 тика на строку (только в первой половине фрейма)
@@ -669,10 +671,14 @@ void CMotherboard::DebugTicks()
 bool CMotherboard::SystemFrame()
 {
     int frameticks = 0;  // 20000 ticks
+    int floppyticks = m_floppyticks;
     const int audioticks = 20286 / (SAMPLERATE / 25);
     m_SoundChanges = 0;
-    const int serialOutTicks = 7; // 20000 / (9600 / 25);
-    const int serialInTicks = 7; // 20000 / (9600 / 25);
+    // (9600 / <1 start> + <8 data> + <2 stop>) = 9600 / 11 = ~872.7 bytes/sec;
+    // 1/tick = ticks per sec, (1/2uS) = 500000
+    // 500000 / (9600 / 11) is decimation period = 572
+    const int serialOutTicks = 100;
+    const int serialInTicks = 100; 
     int serialTxCount = 0;
     const int networkOutTicks = 7; //20000 / (57600 / 25);
     int networkTxCount = 0;
@@ -727,7 +733,7 @@ bool CMotherboard::SystemFrame()
                 SYSTEMFRAME_EXECUTE_BP_PPU;
         }
 
-        if ((frameticks & 31) == 0)  // (frameticks % 32 == 0)
+        if ((floppyticks & 31) == 0)  // (frameticks % 32 == 0)
         {
             m_pFloppyCtl->Periodic();  // Each 32nd tick -- FDD tick
 
@@ -902,9 +908,11 @@ bool CMotherboard::SystemFrame()
             }
         }
 
-        frameticks++;
-    }
-    while (frameticks < 10000);
+        ++ frameticks;
+        ++ floppyticks;
+    } while (frameticks < 10000);
+
+    m_floppyticks = floppyticks;
 
     return true;
 }
