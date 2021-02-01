@@ -22,7 +22,8 @@ static void CALLBACK waveOutProc(HWAVEOUT, UINT, DWORD, DWORD, DWORD);
 
 static CRITICAL_SECTION waveCriticalSection;
 static WAVEHDR*         waveBlocks;
-static volatile int     waveFreeBlockCount;
+//static 
+volatile int     waveFreeBlockCount;
 static int              waveCurrentBlock;
 
 static bool m_SoundGenInitialized = false;

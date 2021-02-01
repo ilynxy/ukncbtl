@@ -672,7 +672,22 @@ bool CMotherboard::SystemFrame()
 {
     int frameticks = 0;  // 20000 ticks
     int floppyticks = m_floppyticks;
-    const int audioticks = 20286 / (SAMPLERATE / 25);
+
+    // const int audioticks = 20286 / (SAMPLERATE / 24);
+
+    extern volatile int waveFreeBlockCount;
+
+    int audioticks = 23;
+    int freeblocks = waveFreeBlockCount;
+    if (freeblocks < 4)
+      audioticks = 24;
+    else if (freeblocks > 4)
+      audioticks = 22;
+
+    double audio_step = 1.012;
+    double audio_max = 23.0;
+    double audio_cnt = 0.0;
+
     m_SoundChanges = 0;
     // (9600 / <1 start> + <8 data> + <2 stop>) = 9600 / 11 = ~872.7 bytes/sec;
     // 1/tick = ticks per sec, (1/2uS) = 500000
@@ -775,8 +790,14 @@ bool CMotherboard::SystemFrame()
         if (m_pHardDrives[1] != nullptr)
             m_pHardDrives[1]->Periodic();
 
-        if (frameticks % audioticks == 0) //AUDIO tick
+        audio_cnt += audio_step;
+        if (audio_cnt >= audio_max) {
+            audio_cnt -= audio_max;
             DoSound();
+        }
+
+//        if (frameticks % audioticks == 0) //AUDIO tick
+//            DoSound();
 
         if (m_TapeReadCallback != nullptr || m_TapeWriteCallback != nullptr)
         {

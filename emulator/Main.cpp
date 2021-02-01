@@ -111,7 +111,7 @@ int APIENTRY _tWinMain(
             ::DispatchMessage(&msg);
         }
 
-        if (g_okEmulatorRunning && !Settings_GetSound())
+        if (g_okEmulatorRunning /* &&  !Settings_GetSound() */)
         {
             if (Settings_GetRealSpeed() == 0)
             {

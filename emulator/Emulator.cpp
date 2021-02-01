@@ -716,8 +716,13 @@ bool Emulator_SystemFrame()
         int minutes = (int) (m_dwEmulatorUptime / 60 % 60);
         int hours   = (int) (m_dwEmulatorUptime / 3600 % 60);
 
-        TCHAR buffer[20];
-        _stprintf(buffer, _T("Uptime: %02d:%02d:%02d"), hours, minutes, seconds);
+        extern volatile int waveFreeBlockCount;
+
+        TCHAR buffer[64];
+        _stprintf(buffer, _T("Uptime: %02d:%02d:%02d (SND: %u)"), 
+            hours, minutes, seconds,
+            waveFreeBlockCount
+        );
         MainWindow_SetStatusbarText(StatusbarPartUptime, buffer);
     }
 
