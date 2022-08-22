@@ -65,7 +65,7 @@ void DebugLogFormat(LPCTSTR pszFormat, ...);
 
 
 // Processor register names
-extern const TCHAR* REGISTER_NAME[8];
+extern const TCHAR* REGISTER_NAME[8] ;
 
 const int UKNC_SCREEN_WIDTH = 640;
 const int UKNC_SCREEN_HEIGHT = 288;
