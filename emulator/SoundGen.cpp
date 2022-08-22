@@ -11,9 +11,9 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 // SoundGen.cpp
 
 #include "stdafx.h"
-#include "emubase/Emubase.h"
+#include "emubase\Emubase.h"
 #include "SoundGen.h"
-#include "mmsystem.h"
+#include "Mmsystem.h"
 
 //////////////////////////////////////////////////////////////////////
 
