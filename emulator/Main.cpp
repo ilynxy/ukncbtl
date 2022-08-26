@@ -14,7 +14,8 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 #include <crtdbg.h>
 #include <CommCtrl.h>
 #include <shellapi.h>
-#include <timeapi.h>
+//#include <timeapi.h>
+#include <mmsystem.h>
 
 #include "Main.h"
 #include "Emulator.h"
@@ -37,8 +38,7 @@ void ParseCommandLine();
 
 
 //////////////////////////////////////////////////////////////////////
-
-
+extern "C"
 int APIENTRY _tWinMain(
     HINSTANCE hInstance,
     HINSTANCE hPrevInstance,

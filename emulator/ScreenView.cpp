@@ -383,7 +383,7 @@ LRESULT CALLBACK ScreenViewWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARA
     case WM_SETCURSOR:
         if (::GetFocus() == g_hwndScreen)
         {
-            SetCursor(::LoadCursor(NULL, MAKEINTRESOURCE(IDC_IBEAM)));
+            SetCursor(::LoadCursor(NULL, IDC_IBEAM));
             return (LRESULT) TRUE;
         }
         return DefWindowProc(hWnd, message, wParam, lParam);
