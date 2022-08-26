@@ -703,7 +703,11 @@ bool CMotherboard::SystemFrame()
     unsigned int frameticks = m_frameticks;  // 20000 ticks
     const int audioticks = 20286 / (SAMPLERATE / 25); // TODO: What is it?
     m_SoundChanges = 0;
-    const int serialBaudRate = 4*57600;
+
+    int serialBaudRate = 9600;
+    if ( (m_SerialBaudRate >= 9600) && (m_SerialBaudRate <= 115200) )
+      serialBaudRate = m_SerialBaudRate;
+
     const int serialTXRXBits = 1 + 8 + 2; // 1 start + 8 data + 2 stop
     const int serialOutTicks = (20000 * 25 * serialTXRXBits) / serialBaudRate;
     const int serialInTicks  = (20000 * 25 * serialTXRXBits) / serialBaudRate;
