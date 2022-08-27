@@ -276,6 +276,7 @@ public:  // System control
     void        SetSoundGenCallback(SOUNDGENCALLBACK callback);
     /// \brief Assign serial port input/output callback functions.
     void        SetSerialCallbacks(SERIALINCALLBACK incallback, SERIALOUTCALLBACK outcallback);
+    void        SetSerialBaudRate(int baudrate) { m_SerialBaudRate = baudrate; }
     /// \brief Assign parallel port output callback function.
     void        SetParallelOutCallback(PARALLELOUTCALLBACK outcallback);
     /// \brief Assign network port input/output callback functions.
@@ -323,6 +324,7 @@ private:
     int                 m_SoundChanges;  ///< Sound signal 0 to 1 changes since the beginning of the frame
     SERIALINCALLBACK    m_SerialInCallback;
     SERIALOUTCALLBACK   m_SerialOutCallback;
+    int                 m_SerialBaudRate;
     PARALLELOUTCALLBACK m_ParallelOutCallback;
     NETWORKINCALLBACK   m_NetworkInCallback;
     NETWORKOUTCALLBACK  m_NetworkOutCallback;

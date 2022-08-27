@@ -703,7 +703,14 @@ bool CMotherboard::SystemFrame()
     unsigned int frameticks = m_frameticks;  // 20000 ticks
     const int audioticks = 20286 / (SAMPLERATE / 25); // TODO: What is it?
     m_SoundChanges = 0;
-    const int serialOutTicks = 20000 / (9600 / 25);
+
+    int serialBaudRate = 9600;
+    if ( (m_SerialBaudRate >= 9600) && (m_SerialBaudRate <= 115200) )
+      serialBaudRate = m_SerialBaudRate;
+
+    const int serialTXRXBits = 1 + 8 + 2; // 1 start + 8 data + 2 stop
+    const int serialOutTicks = (20000 * 25 * serialTXRXBits) / serialBaudRate;
+    const int serialInTicks  = (20000 * 25 * serialTXRXBits) / serialBaudRate;
     int serialTxCount = 0;
     const int networkOutTicks = 7; //20000 / (57600 / 25);
     int networkTxCount = 0;
@@ -828,7 +835,7 @@ bool CMotherboard::SystemFrame()
             }
         }
 
-        if (m_SerialInCallback != nullptr && frameticks % 416 == 0)
+        if (m_SerialInCallback != nullptr && (frameticks % serialInTicks == 0))
         {
             CFirstMemoryController* pMemCtl = static_cast<CFirstMemoryController*>(m_pFirstMemCtl);
             if ((pMemCtl->m_Port176574 & 004) == 0)  // Not loopback?
@@ -841,7 +848,7 @@ bool CMotherboard::SystemFrame()
                 }
             }
         }
-        if (m_SerialOutCallback != nullptr && frameticks % serialOutTicks == 0)
+        if (m_SerialOutCallback != nullptr && (frameticks % serialOutTicks == 0))
         {
             CFirstMemoryController* pMemCtl = static_cast<CFirstMemoryController*>(m_pFirstMemCtl);
             if (serialTxCount > 0)

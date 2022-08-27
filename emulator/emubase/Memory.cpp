@@ -808,6 +808,7 @@ CSecondMemoryController::CSecondMemoryController() : CMemoryController()
 void CSecondMemoryController::DCLO_Signal()
 {
     DCLO_177716();
+    m_Port177054 = 01401;
 }
 
 void CSecondMemoryController::ResetDevices()

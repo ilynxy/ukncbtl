@@ -620,10 +620,12 @@ bool Emulator_SetSerial(bool serialOnOff, LPCTSTR serialPort)
 
             // Set callbacks
             g_pBoard->SetSerialCallbacks(Emulator_SerialIn_Callback, Emulator_SerialOut_Callback);
+            g_pBoard->SetSerialBaudRate(dcb.BaudRate);
         }
         else
         {
             g_pBoard->SetSerialCallbacks(nullptr, nullptr);  // Reset callbacks
+            g_pBoard->SetSerialBaudRate(0);
 
             // Close port
             if (m_hEmulatorComPort != INVALID_HANDLE_VALUE)
