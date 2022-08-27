@@ -117,6 +117,8 @@ BEGIN
     END
     POPUP "Render",                         65535,MFT_STRING,MFS_ENABLED
     BEGIN
+        MENUITEM "VSync",                       32846,MFT_STRING,MFS_DISABLED
+        MENUITEM SEPARATOR
         MENUITEM "Render Mode 0",               32827,MFT_STRING,MFS_ENABLED
     END
     POPUP "&Emulator",                      65535,MFT_STRING,MFS_ENABLED

@@ -942,10 +942,10 @@ void MainWindow_UpdateRenderModeMenu()
     HMENU hMenuRender = ::GetSubMenu(hMenu, 2);
     int count = ::GetMenuItemCount(hMenuRender);
     // Delete all items except the first one
-    for (int i = 1; i < count; i++)
-        ::DeleteMenu(hMenuRender, 1, MF_BYPOSITION);
+    for (int i = 2; i < count; i++)
+        ::DeleteMenu(hMenuRender, 2, MF_BYPOSITION);
 
-    for (UINT i = 0; i < 32; i++)
+    for (UINT i = 2; i < 32; i++)
     {
         LPCTSTR cmddesc = ScreenView_GetRenderModeDescription(i);
         UINT cmd = i + ID_VIEW_RENDERMODE;
