@@ -11,7 +11,7 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 // MemoryView.cpp
 
 #include "stdafx.h"
-#include <CommCtrl.h>
+#include <commctrl.h>
 #include <windowsx.h>
 #include "Main.h"
 #include "Views.h"

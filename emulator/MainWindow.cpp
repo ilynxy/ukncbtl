@@ -12,7 +12,7 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 
 #include "stdafx.h"
 #include <commdlg.h>
-#include <CommCtrl.h>
+#include <commctrl.h>
 
 #include "Main.h"
 #include "Emulator.h"

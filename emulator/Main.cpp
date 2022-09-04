@@ -12,7 +12,7 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 
 #include "stdafx.h"
 #include <crtdbg.h>
-#include <CommCtrl.h>
+#include <commctrl.h>
 #include <shellapi.h>
 //#include <timeapi.h>
 #include <mmsystem.h>
