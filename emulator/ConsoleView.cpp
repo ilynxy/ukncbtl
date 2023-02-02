@@ -263,13 +263,21 @@ void ConsoleView_PrintConsolePrompt()
 // Print register name, octal value and binary value
 void ConsoleView_PrintRegister(LPCTSTR strName, WORD value)
 {
-    TCHAR buffer[31];
+    TCHAR buffer[36];
     TCHAR* p = buffer;
     *p++ = _T(' ');
     *p++ = _T(' ');
-    lstrcpy(p, strName);  p += 2;
-    *p++ = _T(' ');
+    lstrcpy(p, strName);
+    if (lstrlen(strName) > 2)
+        p += 3;
+    else
+    {
+        p += 2;
+        *p++ = _T(' ');
+    }
     PrintOctalValue(p, value);  p += 6;
+    *p++ = _T(' ');
+    PrintHexValue(p, value);  p += 4;
     *p++ = _T(' ');
     PrintBinaryValue(p, value);  p += 16;
     *p++ = _T('\r');
@@ -331,12 +339,15 @@ BOOL ConsoleView_SaveMemoryDump(CProcessor *pProc)
     if (dwBytesWritten != 65536)
         return FALSE;
 
+    ConsoleView_PrintFormat(_T("  %s memory saved to %s\r\n"), pProc->GetName(), fname);
     return TRUE;
 }
 
 void ConsoleView_SaveDisplayListDump()
 {
-    FILE* fpFile = ::_tfopen(_T("displaylist.txt"), _T("wt"));
+    LPCTSTR fname = _T("displaylist.txt");
+    FILE* fpFile = ::_tfopen(fname, _T("wt"));
+    //TODO: check if fpFile == nullptr
     _ftprintf(fpFile, _T("line address  tag 1  tag 2  bits   next   \n"));
 
     WORD address = 0000270;  // Tag sequence start address
@@ -397,6 +408,8 @@ void ConsoleView_SaveDisplayListDump()
     }
 
     ::fclose(fpFile);
+
+    ConsoleView_PrintFormat(_T("  Display list saved to %s\r\n"), fname);
 }
 
 // Print memory dump
@@ -543,6 +556,7 @@ void ConsoleView_CmdShowHelp(const ConsoleCommandParams& /*params*/)
             _T("  m          Memory dump at current address\r\n")
             _T("  mXXXXXX    Memory dump at address XXXXXX\r\n")
             _T("  mrN        Memory dump at address from register N; N=0..7\r\n")
+            _T("  mXXXXXX YYYYYY  Set memory value at address XXXXXX\r\n")
             _T("  p          Switch to other processor\r\n")
             _T("  r          Show register values\r\n")
             _T("  rN         Show value of register N; N=0..7,ps\r\n")
@@ -555,7 +569,7 @@ void ConsoleView_CmdShowHelp(const ConsoleCommandParams& /*params*/)
             _T("  bc         Remove all breakpoints for the current processor\r\n")
             _T("  u          Save memory dump to file memdumpXPU.bin\r\n")
             _T("  udl        Save display list dump to file displaylist.txt\r\n")
-            _T("  fcXXXXXX XXXXXX  Calculate floating number for the two octal words\r\n")
+            _T("  fcXXXXXX YYYYYY  Calculate floating number for the two octal words\r\n")
 #if !defined(PRODUCT)
             _T("  t          Tracing on/off to trace.log file\r\n")
             _T("  tXXXXXX    Set tracing flags\r\n")
@@ -665,7 +679,9 @@ void ConsoleView_CmdPrintAllRegisters(const ConsoleCommandParams& /*params*/)
         WORD value = pProc->GetReg(r);
         ConsoleView_PrintRegister(name, value);
     }
+    ConsoleView_PrintRegister(_T("PC'"), pProc->GetCPC());
     ConsoleView_PrintRegister(_T("PS"), pProc->GetPSW());
+    ConsoleView_PrintRegister(_T("PS'"), pProc->GetCPSW());
 }
 
 void ConsoleView_CmdStepInto(const ConsoleCommandParams& /*params*/)
@@ -681,8 +697,23 @@ void ConsoleView_CmdStepInto(const ConsoleCommandParams& /*params*/)
 void ConsoleView_CmdStepOver(const ConsoleCommandParams& /*params*/)
 {
     CProcessor* pProc = ConsoleView_GetCurrentProcessor();
+    CMemoryController* pMemCtl = pProc->GetMemoryController();
 
     int instrLength = ConsoleView_PrintDisassemble(pProc, pProc->GetPC(), TRUE, FALSE);
+
+    int addrtype;
+    uint16_t instr = pMemCtl->GetWordView(pProc->GetPC(), pProc->IsHaltMode(), true, &addrtype);
+
+    // For JMP and BR use Step Into logic, not Step Over
+    if ((instr & ~(uint16_t)077) == PI_JMP || (instr & ~(uint16_t)0377) == PI_BR)
+    {
+        g_pBoard->DebugTicks();
+
+        MainWindow_UpdateAllViews();
+
+        return;
+    }
+
     uint16_t bpaddress = (uint16_t)(pProc->GetPC() + instrLength * 2);
 
     if (m_okCurrentProc)
@@ -690,8 +721,6 @@ void ConsoleView_CmdStepOver(const ConsoleCommandParams& /*params*/)
     else
         Emulator_SetTempPPUBreakpoint(bpaddress);
     Emulator_Start();
-
-    MainWindow_UpdateAllViews();
 }
 void ConsoleView_CmdRun(const ConsoleCommandParams& /*params*/)
 {
@@ -756,6 +785,28 @@ void ConsoleView_CmdRemoveBreakpointAtAddress(const ConsoleCommandParams& params
 void ConsoleView_CmdSaveDisplayListDump(const ConsoleCommandParams& /*params*/)
 {
     ConsoleView_SaveDisplayListDump();
+}
+
+void ConsoleView_CmdSetMemoryAtAddress(const ConsoleCommandParams& params)
+{
+    uint16_t address = params.paramOct1;
+    uint16_t value = params.paramOct2;
+
+    CProcessor* pProc = ConsoleView_GetCurrentProcessor();
+    CMemoryController* pMemCtl = pProc->GetMemoryController();
+    bool okHaltMode = pProc->IsHaltMode();
+
+    int addrtype;
+    pMemCtl->GetWordView(address, okHaltMode, false, &addrtype);
+    if (addrtype != ADDRTYPE_RAM12 && addrtype != ADDRTYPE_RAM0 && addrtype != ADDRTYPE_RAM1 && addrtype != ADDRTYPE_RAM2)
+    {
+        ConsoleView_Print(_T("  Can't change memory value for this memory type.\r\n"));
+        return;
+    }
+
+    pMemCtl->SetWord(address, okHaltMode, value);
+
+    MainWindow_UpdateAllViews();
 }
 
 void ConsoleView_CmdCalculateFloatNumber(const ConsoleCommandParams& params)
@@ -847,6 +898,8 @@ static ConsoleCommands[] =
     { _T("D"), ARGINFO_NONE, ConsoleView_CmdPrintDisassembleAtPC },
     { _T("u"), ARGINFO_NONE, ConsoleView_CmdSaveMemoryDump },
     { _T("udl"), ARGINFO_NONE, ConsoleView_CmdSaveDisplayListDump },
+    { _T("m%ho %ho"), ARGINFO_OCT_OCT, ConsoleView_CmdSetMemoryAtAddress },
+    { _T("m%ho=%ho"), ARGINFO_OCT_OCT, ConsoleView_CmdSetMemoryAtAddress },
     { _T("m%ho"), ARGINFO_OCT, ConsoleView_CmdPrintMemoryDumpAtAddress },
     { _T("mr%d"), ARGINFO_REG, ConsoleView_CmdPrintMemoryDumpAtRegister },
     { _T("m"), ARGINFO_NONE, ConsoleView_CmdPrintMemoryDumpAtPC },
@@ -858,8 +911,8 @@ static ConsoleCommands[] =
     { _T("bc"), ARGINFO_NONE, ConsoleView_CmdRemoveAllBreakpoints },
     { _T("fc%ho %ho"), ARGINFO_OCT_OCT, ConsoleView_CmdCalculateFloatNumber },
 #if !defined(PRODUCT)
-    { _T("t"), ARGINFO_NONE, ConsoleView_CmdTraceLogOnOff },
     { _T("t%ho"), ARGINFO_OCT, ConsoleView_CmdTraceLogWithMask },
+    { _T("t"), ARGINFO_NONE, ConsoleView_CmdTraceLogOnOff },
     { _T("tc"), ARGINFO_NONE, ConsoleView_CmdClearTraceLog },
 #endif
 };
@@ -902,7 +955,7 @@ void ConsoleView_DoConsoleCommand()
         case ARGINFO_REG:
             paramsParsed = _sntscanf_s(command, 32, cmd.pattern, &params.paramReg1);
             parsedOkay = (paramsParsed == 1);
-            if (parsedOkay && params.paramReg1 < 0 || params.paramReg1 > 7)
+            if (parsedOkay && (params.paramReg1 < 0 || params.paramReg1 > 7))
             {
                 ConsoleView_Print(MESSAGE_INVALID_REGNUM);
                 parseError = true;
@@ -915,7 +968,7 @@ void ConsoleView_DoConsoleCommand()
         case ARGINFO_REG_OCT:
             paramsParsed = _sntscanf_s(command, 32, cmd.pattern, &params.paramReg1, &params.paramOct1);
             parsedOkay = (paramsParsed == 2);
-            if (parsedOkay && params.paramReg1 < 0 || params.paramReg1 > 7)
+            if (parsedOkay && (params.paramReg1 < 0 || params.paramReg1 > 7))
             {
                 ConsoleView_Print(MESSAGE_INVALID_REGNUM);
                 parseError = true;

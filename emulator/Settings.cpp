@@ -25,6 +25,7 @@ DCB  m_Settings_NetComConfig;
 //////////////////////////////////////////////////////////////////////
 // Options
 
+bool Option_ShowHelp = false;
 int Option_AutoBoot = 0;
 
 
@@ -359,6 +360,7 @@ SETTINGS_GETSET_DWORD(RealSpeed, _T("RealSpeed"), WORD, 1);
 
 SETTINGS_GETSET_DWORD(Sound, _T("Sound"), BOOL, FALSE);
 SETTINGS_GETSET_DWORD(SoundVolume, _T("SoundVolume"), WORD, 0x3fff);
+SETTINGS_GETSET_DWORD(SoundAY, _T("SoundAY"), BOOL, FALSE);
 
 SETTINGS_GETSET_DWORD(Keyboard, _T("Keyboard"), BOOL, TRUE);
 
@@ -497,6 +499,8 @@ static ColorDescriptors[ColorIndicesCount] =
     { _T("ColorDebugJumpHint"),     RGB(40,  128, 160), FALSE, _T("Debug Jump Hint") },
     { _T("ColorDebugHint"),         RGB(40,  40,  160), FALSE, _T("Debug Hint") },
     { _T("ColorDebugBreakpoint"),   RGB(255, 128, 128), FALSE, _T("Debug Breakpoint") },
+    { _T("ColorDebugHighlight"),    RGB(200, 230, 255), FALSE, _T("Debug Highlight") },
+    { _T("ColorDebugBreakptZone"),  RGB(242, 242, 242), FALSE, _T("Debug Breakpoint Zone") },
 };
 
 LPCTSTR Settings_GetColorFriendlyName(ColorIndices colorIndex)

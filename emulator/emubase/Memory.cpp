@@ -553,7 +553,7 @@ void CFirstMemoryController::SetPortByte(uint16_t address, uint8_t byte)
         break;
     case 0176562: // СА: Регистр данных приемника
     case 0176563: // недоступен по записи
-        return ;
+        return;
     case 0176564: // СА: Регистр состояния источника
     case 0176565:
         m_Port176564 = (m_Port176564 & ~0105) | (word & 0105);  // Bits 0,2,6
@@ -570,7 +570,7 @@ void CFirstMemoryController::SetPortByte(uint16_t address, uint8_t byte)
         break;
     case 0176572:  // Стык С2: Регистр данных приемника
     case 0176573:  // недоступен по записи
-        return ;
+        return;
     case 0176574:  // Стык С2: Регистр состояния источника
     case 0176575:
         m_Port176574 = (m_Port176574 & ~0105) | (word & 0105);  // Bits 0,2,6
@@ -675,7 +675,7 @@ void CFirstMemoryController::SetPortWord(uint16_t address, uint16_t word)
         break;
     case 0176562:  // СА: Регистр данных приемника
     case 0176563:  // недоступен по записи
-        return ;
+        return;
     case 0176564:  // СА: Регистр состояния источника
     case 0176565:
         if (((m_Port176564 & 0300) == 0200) && (word & 0100))
@@ -694,7 +694,7 @@ void CFirstMemoryController::SetPortWord(uint16_t address, uint16_t word)
         break;
     case 0176572:  // Стык С2: Регистр данных приемника
     case 0176573:  // недоступен по записи
-        return ;
+        return;
     case 0176574:  // Стык С2: Регистр состояния источника
     case 0176575:
         if (((m_Port176574 & 0300) == 0200) && (word & 0100))
@@ -1056,6 +1056,11 @@ uint16_t CSecondMemoryController::GetPortWord(uint16_t address)
     case 0177103:  // i8255 control
         return 0;
 
+    case 0177360:  // Sound AY
+    case 0177362:
+    case 0177364:
+        return 0; //m_pBoard->GetSoundAYVal((address >> 1) & 3);
+
     case 0177700:
     case 0177701:
         return m_Port177700;  // Keyboard status
@@ -1229,6 +1234,12 @@ void CSecondMemoryController::SetPortByte(uint16_t address, uint8_t byte)
     case 0177132:  // FDD data
     case 0177133:
         m_pBoard->SetFloppyData(word);
+        break;
+
+    case 0177360:  // Sound AY
+    case 0177362:
+    case 0177364:
+        m_pBoard->SetSoundAYVal((address >> 1) & 3, byte);
         break;
 
     case 0177700:  // Keyboard status
@@ -1445,6 +1456,12 @@ void CSecondMemoryController::SetPortWord(uint16_t address, uint16_t word)
         //DebugLogFormat(_T("%s: FDD DATA W %s, %s\r\n"), oct2, oct1, oct);
         //DebugLogFormat(_T("FDD DATA  W %04x\r\n"), word);
         m_pBoard->SetFloppyData(word);
+        break;
+
+    case 0177360:  // Sound AY
+    case 0177362:
+    case 0177364:
+        m_pBoard->SetSoundAYReg((address >> 1) & 3, word & 0xFF);
         break;
 
     case 0177700:  // Keyboard status

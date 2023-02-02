@@ -298,20 +298,36 @@ void MemoryView_OnRButtonDown(int mousex, int mousey)
 {
     ::SetFocus(m_hwndMemoryViewer);
 
+    POINT pt = { mousex, mousey };
+    HMENU hMenu = ::CreatePopupMenu();
+
     int addr = MemoryView_GetAddressByPoint(mousex, mousey);
     if (addr >= 0)
+    {
         MemoryView_GotoAddress((WORD)addr);
 
-    RECT rcValue;
-    MemoryView_GetCurrentValueRect(&rcValue, m_cxChar, m_cyLineMemory);
+        RECT rcValue;
+        MemoryView_GetCurrentValueRect(&rcValue, m_cxChar, m_cyLineMemory);
+        pt.x = rcValue.left;  pt.y = rcValue.bottom;
 
-    HMENU hMenu = ::CreatePopupMenu();
-    ::AppendMenu(hMenu, 0, ID_DEBUG_COPY_VALUE, _T("Copy Value"));
-    ::AppendMenu(hMenu, 0, ID_DEBUG_COPY_ADDRESS, _T("Copy Address"));
-    ::AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
+        int addrtype;
+        BOOL okValid;
+        WORD wChanged;
+        uint16_t value = MemoryView_GetWordFromMemory((uint16_t)addr, okValid, addrtype, wChanged);
+
+        TCHAR buffer[24];
+        if (okValid)
+        {
+            _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR) - 1, _T("Copy Value: %06o"), value);
+            ::AppendMenu(hMenu, 0, ID_DEBUG_COPY_VALUE, buffer);
+        }
+        _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR) - 1, _T("Copy Address: %06o"), addr);
+        ::AppendMenu(hMenu, 0, ID_DEBUG_COPY_ADDRESS, buffer);
+        ::AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
+    }
+
     ::AppendMenu(hMenu, 0, ID_DEBUG_GOTO_ADDRESS, _T("Go to Address...\tG"));
 
-    POINT pt = { rcValue.left, rcValue.bottom };
     ::ClientToScreen(m_hwndMemoryViewer, &pt);
     ::TrackPopupMenu(hMenu, 0, pt.x, pt.y, 0, m_hwndMemoryViewer, NULL);
 
@@ -435,7 +451,7 @@ void MemoryView_GotoAddress(WORD wAddress)
     MemoryView_UpdateWindowText();
 }
 
-// Scroll window to given base address
+// Scroll window to the given base address
 void MemoryView_ScrollTo(WORD wBaseAddress)
 {
     if (wBaseAddress == m_wBaseAddress)
@@ -460,7 +476,6 @@ void MemoryView_CopyValueToClipboard(WPARAM command)
     }
     else
     {
-        //TODO: Get word from memory
         // Get word from memory
         int addrtype;
         BOOL okValid;
@@ -477,17 +492,7 @@ void MemoryView_CopyValueToClipboard(WPARAM command)
     TCHAR buffer[7];
     PrintOctalValue(buffer, value);
 
-    // Prepare global memory object for the text
-    HGLOBAL hglbCopy = ::GlobalAlloc(GMEM_MOVEABLE, sizeof(buffer));
-    LPTSTR lptstrCopy = (LPTSTR) ::GlobalLock(hglbCopy);
-    memcpy(lptstrCopy, buffer, sizeof(buffer));
-    ::GlobalUnlock(hglbCopy);
-
-    // Send the text to the Clipboard
-    ::OpenClipboard(g_hwnd);
-    ::EmptyClipboard();
-    ::SetClipboardData(CF_UNICODETEXT, hglbCopy);
-    ::CloseClipboard();
+    CopyTextToClipboard(buffer);
 }
 
 void MemoryView_SwitchWordByte()
@@ -527,7 +532,7 @@ void MemoryView_GetCurrentValueRect(LPRECT pRect, int cxChar, int cyLine)
     int line = addroffset / 16;
     int pos = addroffset & 15;
 
-    pRect->left = cxChar * (13 + 7 * (pos / 2)) - cxChar / 2;
+    pRect->left = 32 + 4 + cxChar * (9 + 7 * (pos / 2)) - cxChar / 2;
     pRect->right = pRect->left + cxChar * 7;
     pRect->top = (line + 1) * cyLine - 1;
     pRect->bottom = pRect->top + cyLine + 1;
@@ -588,29 +593,40 @@ void MemoryView_OnDraw(HDC hdc)
     COLORREF colorMemoryRom = Settings_GetColor(ColorDebugMemoryRom);
     COLORREF colorMemoryIO = Settings_GetColor(ColorDebugMemoryIO);
     COLORREF colorMemoryNA = Settings_GetColor(ColorDebugMemoryNA);
-    COLORREF colorOld = SetTextColor(hdc, colorText);
-    COLORREF colorBkOld = SetBkColor(hdc, GetSysColor(COLOR_WINDOW));
-
-    m_cxChar = cxChar;
-    m_cyLineMemory = cyLine;
-
-    TCHAR buffer[7];
-    const TCHAR* ADDRESS_LINE = _T(" addr   0      2      4      6      10     12     14     16");
-    TextOut(hdc, cxChar * 5, 0, ADDRESS_LINE, (int)_tcslen(ADDRESS_LINE));
+    COLORREF colorHighlight = Settings_GetColor(ColorDebugHighlight);
 
     RECT rcClip;
     GetClipBox(hdc, &rcClip);
     RECT rcClient;
     GetClientRect(m_hwndMemoryViewer, &rcClient);
+
+    int xRight = 32 + 4 + cxChar * 82 + cxChar / 2;
+    HGDIOBJ hOldBrush = ::SelectObject(hdc, ::GetSysColorBrush(COLOR_BTNFACE));
+    ::PatBlt(hdc, 32, 0, 4, rcClient.bottom, PATCOPY);
+    ::PatBlt(hdc, xRight, 0, 4, rcClient.bottom, PATCOPY);
+
+    HBRUSH hbrHighlight = ::CreateSolidBrush(colorHighlight);
+    ::SelectObject(hdc, hbrHighlight);
+    ::SetBkMode(hdc, TRANSPARENT);
+
+    m_cxChar = cxChar;
+    m_cyLineMemory = cyLine;
+
+    TCHAR buffer[7];
+    const TCHAR* ADDRESS_LINE = _T("  addr   0      2      4      6      10     12     14     16");
+    TextOut(hdc, cxChar * 5, 0, ADDRESS_LINE, (int)_tcslen(ADDRESS_LINE));
+
     m_nPageSize = rcClient.bottom / cyLine - 1;
 
     WORD address = m_wBaseAddress;
     int y = 1 * cyLine;
     for (;;)    // Draw lines
     {
-        DrawOctalValue(hdc, 5 * cxChar, y, address);
+        uint16_t lineAddress = address;
 
-        int x = 13 * cxChar;
+        DrawOctalValue(hdc, 6 * cxChar, y, address);
+
+        int x = 14 * cxChar;
         TCHAR wchars[16];
         for (int j = 0; j < 8; j++)    // Draw words as octal value
         {
@@ -619,6 +635,9 @@ void MemoryView_OnDraw(HDC hdc)
             BOOL okValid;
             WORD wChanged;
             WORD word = MemoryView_GetWordFromMemory(address, okValid, addrtype, wChanged);
+
+            if (address == m_wCurrentAddress)
+                ::PatBlt(hdc, x - cxChar / 2, y, cxChar * 7, cyLine, PATCOPY);
 
             if (okValid)
             {
@@ -641,12 +660,12 @@ void MemoryView_OnDraw(HDC hdc)
                 if (addrtype == ADDRTYPE_IO)
                 {
                     ::SetTextColor(hdc, colorMemoryIO);
-                    TextOut(hdc, x, y, _T("  IO"), 4);
+                    TextOut(hdc, x, y, _T("  IO  "), 6);
                 }
                 else
                 {
                     ::SetTextColor(hdc, colorMemoryNA);
-                    TextOut(hdc, x, y, _T("  NA"), 4);
+                    TextOut(hdc, x, y, _T("  NA  "), 6);
                 }
             }
 
@@ -663,9 +682,17 @@ void MemoryView_OnDraw(HDC hdc)
             address += 2;
             x += 7 * cxChar;
         }
-        ::SetTextColor(hdc, colorText);
+
+        // Highlight characters at right
+        if (lineAddress <= m_wCurrentAddress && m_wCurrentAddress < lineAddress + 16)
+        {
+            int xHighlight = x + cxChar + (m_wCurrentAddress - lineAddress) * cxChar;
+            ::PatBlt(hdc, xHighlight, y, cxChar * 2, cyLine, PATCOPY);
+        }
 
         // Draw characters at right
+        ::SetTextColor(hdc, colorText);
+        ::SetBkMode(hdc, TRANSPARENT);
         int xch = x + cxChar;
         TextOut(hdc, xch, y, wchars, 16);
 
@@ -673,8 +700,8 @@ void MemoryView_OnDraw(HDC hdc)
         if (y > rcClip.bottom) break;
     }
 
-    SetTextColor(hdc, colorOld);
-    SetBkColor(hdc, colorBkOld);
+    ::SelectObject(hdc, hOldBrush);
+    VERIFY(::DeleteObject(hbrHighlight));
     SelectObject(hdc, hOldFont);
     VERIFY(::DeleteObject(hFont));
 

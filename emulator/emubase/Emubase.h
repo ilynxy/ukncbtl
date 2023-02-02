@@ -28,6 +28,21 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 /// \return  Number of words in the instruction
 uint16_t DisassembleInstruction(const uint16_t* pMemory, uint16_t addr, TCHAR* sInstr, TCHAR* sArg);
 
+bool Disasm_CheckForJump(const uint16_t* memory, int* pDelta);
+
+// Prepare "Jump Hint" string, and also calculate condition for conditional jump
+// Returns: jump prediction flag: true = will jump, false = will not jump
+bool Disasm_GetJumpConditionHint(
+    const uint16_t* memory, const CProcessor * pProc, const CMemoryController * pMemCtl, LPTSTR buffer);
+
+// Prepare "Instruction Hint" for a regular instruction (not a branch/jump one)
+// buffer, buffer2 - buffers for 1st and 2nd lines of the instruction hint, min size 42
+// Returns: number of hint lines; 0 = no hints
+int Disasm_GetInstructionHint(
+    const uint16_t* memory, const CProcessor * pProc,
+    const CMemoryController * pMemCtl,
+    LPTSTR buffer, LPTSTR buffer2);
+
 
 //////////////////////////////////////////////////////////////////////
 // CFloppy
@@ -188,6 +203,39 @@ private:
     void ContinueRead();
     void ContinueWrite();
     void IdentifyDrive();       ///< Prepare m_buffer for the IDENTIFY DRIVE command
+};
+
+
+//////////////////////////////////////////////////////////////////////
+
+class CSoundAY
+{
+protected:
+    int index;
+    int ready;
+    unsigned Regs[16];
+    int32_t lastEnable;
+    int32_t PeriodA, PeriodB, PeriodC, PeriodN, PeriodE;
+    int32_t CountA, CountB, CountC, CountN, CountE;
+    uint32_t VolA, VolB, VolC, VolE;
+    uint8_t EnvelopeA, EnvelopeB, EnvelopeC;
+    uint8_t OutputA, OutputB, OutputC, OutputN;
+    int8_t CountEnv;
+    uint8_t Hold, Alternate, Attack, Holding;
+    int32_t RNG;
+protected:
+    static unsigned int VolTable[32];
+
+public:
+    CSoundAY();
+    void Reset();
+
+public:
+    void SetReg(int r, int v);
+    void Callback(uint8_t* stream, int length);
+
+protected:
+    static void BuildMixerTable();
 };
 
 

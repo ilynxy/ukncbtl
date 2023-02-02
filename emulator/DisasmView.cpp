@@ -61,7 +61,6 @@ struct DisasmLineItem
     const DisasmSubtitleItem* pSubItem;  // Link to subtitles item for LINETYPE_SUBTITLE
 };
 
-
 HWND g_hwndDisasm = (HWND) INVALID_HANDLE_VALUE;  // Disasm View window handle
 WNDPROC m_wndprocDisasmToolWindow = NULL;  // Old window proc address of the ToolWindow
 
@@ -93,7 +92,7 @@ void DisasmView_OnRButtonDown(int mousex, int mousey);
 void DisasmView_CopyToClipboard(WPARAM command);
 BOOL DisasmView_ParseSubtitles();
 void DisasmView_DoDraw(HDC hdc);
-int  DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, uint16_t base, uint16_t previous, int x, int y);
+int  DisasmView_DrawDisassemble(HDC hdc, const CProcessor* pProc, uint16_t current, uint16_t previous);
 
 
 //////////////////////////////////////////////////////////////////////
@@ -349,17 +348,7 @@ void DisasmView_CopyToClipboard(WPARAM command)
     TCHAR buffer[7];
     PrintOctalValue(buffer, value);
 
-    // Prepare global memory object for the text
-    HGLOBAL hglbCopy = ::GlobalAlloc(GMEM_MOVEABLE, sizeof(buffer));
-    LPTSTR lptstrCopy = (LPTSTR) ::GlobalLock(hglbCopy);
-    memcpy(lptstrCopy, buffer, sizeof(buffer));
-    ::GlobalUnlock(hglbCopy);
-
-    // Send the text to the Clipboard
-    ::OpenClipboard(g_hwnd);
-    ::EmptyClipboard();
-    ::SetClipboardData(CF_UNICODETEXT, hglbCopy);
-    ::CloseClipboard();
+    CopyTextToClipboard(buffer);
 }
 
 void DisasmView_UpdateWindowText()
@@ -380,7 +369,7 @@ void DisasmView_AddSubtitle(uint16_t addr, int type, LPCTSTR pCommentText)
 {
     DisasmSubtitleItem item;
     item.address = addr;
-    item.type = (DisasmSubtitleType) type;
+    item.type = static_cast<DisasmSubtitleType>(type);
     item.comment = pCommentText;
     m_SubtitleItems.push_back(item);
 }
@@ -421,7 +410,7 @@ void DisasmView_LoadUnloadSubtitles()
         return;
     }
 
-    m_strDisasmSubtitles = (TCHAR*) ::calloc(dwSubFileSize + sizeof(TCHAR), 1);
+    m_strDisasmSubtitles = static_cast<TCHAR*>(::calloc(dwSubFileSize + sizeof(TCHAR), 1));
     DWORD dwBytesRead;
     ::ReadFile(hSubFile, m_strDisasmSubtitles, dwSubFileSize, &dwBytesRead, NULL);
     ASSERT(dwBytesRead == dwSubFileSize);
@@ -569,449 +558,6 @@ void DisasmView_SetCurrentProc(BOOL okCPU)
     DisasmView_OnUpdate();  // We have to re-build the list of lines to show
 }
 
-BOOL DisasmView_CheckForJump(const uint16_t* memory, int* pDelta)
-{
-    uint16_t instr = *memory;
-
-    // BR, BNE, BEQ, BGE, BLT, BGT, BLE
-    // BPL, BMI, BHI, BLOS, BVC, BVS, BHIS, BLO
-    if ((instr & 0177400) >= 0000400 && (instr & 0177400) < 0004000 ||
-        (instr & 0177400) >= 0100000 && (instr & 0177400) < 0104000)
-    {
-        *pDelta = ((int)(char)(instr & 0xff)) + 1;
-        return TRUE;
-    }
-
-    // SOB
-    if ((instr & ~(uint16_t)0777) == PI_SOB)
-    {
-        *pDelta = -(GetDigit(instr, 1) * 8 + GetDigit(instr, 0)) + 1;
-        return TRUE;
-    }
-
-    // CALL, JMP
-    if (instr == 0004767 || instr == 0000167)
-    {
-        *pDelta = ((short)(memory[1]) + 4) / 2;
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
-// Prepare "Jump Hint" string, and also calculate condition for conditional jump
-// Returns: jump prediction flag: TRUE = will jump, FALSE = will not jump
-BOOL DisasmView_GetJumpConditionHint(const uint16_t* memory, const CProcessor * pProc, const CMemoryController * pMemCtl, LPTSTR buffer)
-{
-    const size_t buffersize = 32;
-    *buffer = 0;
-    uint16_t instr = *memory;
-    uint16_t psw = pProc->GetPSW();
-
-    if (instr >= 0001000 && instr <= 0001777)  // BNE, BEQ
-    {
-        _sntprintf(buffer, buffersize - 1, _T("Z=%c"), (psw & PSW_Z) ? '1' : '0');
-        // BNE: IF (Z == 0)
-        // BEQ: IF (Z == 1)
-        BOOL value = ((psw & PSW_Z) != 0);
-        return ((instr & 0400) == 0) ? !value : value;
-    }
-    if (instr >= 0002000 && instr <= 0002777)  // BGE, BLT
-    {
-        _sntprintf(buffer, buffersize - 1, _T("N=%c, V=%c"), (psw & PSW_N) ? '1' : '0', (psw & PSW_V) ? '1' : '0');
-        // BGE: IF ((N xor V) == 0)
-        // BLT: IF ((N xor V) == 1)
-        BOOL value = (((psw & PSW_N) != 0) != ((psw & PSW_V) != 0));
-        return ((instr & 0400) == 0) ? !value : value;
-    }
-    if (instr >= 0003000 && instr <= 0003777)  // BGT, BLE
-    {
-        _sntprintf(buffer, buffersize - 1, _T("N=%c, V=%c, Z=%c"), (psw & PSW_N) ? '1' : '0', (psw & PSW_V) ? '1' : '0', (psw & PSW_Z) ? '1' : '0');
-        // BGT: IF (((N xor V) or Z) == 0)
-        // BLE: IF (((N xor V) or Z) == 1)
-        BOOL value = ((((psw & PSW_N) != 0) != ((psw & PSW_V) != 0)) || ((psw & PSW_Z) != 0));
-        return ((instr & 0400) == 0) ? !value : value;
-    }
-    if (instr >= 0100000 && instr <= 0100777)  // BPL, BMI
-    {
-        _sntprintf(buffer, buffersize - 1, _T("N=%c"), (psw & PSW_N) ? '1' : '0');
-        // BPL: IF (N == 0)
-        // BMI: IF (N == 1)
-        BOOL value = ((psw & PSW_N) != 0);
-        return ((instr & 0400) == 0) ? !value : value;
-    }
-    if (instr >= 0101000 && instr <= 0101777)  // BHI, BLOS
-    {
-        _sntprintf(buffer, buffersize - 1, _T("C=%c, Z=%c"), (psw & PSW_C) ? '1' : '0', (psw & PSW_Z) ? '1' : '0');
-        // BHI:  IF ((С or Z) == 0)
-        // BLOS: IF ((С or Z) == 1)
-        BOOL value = (((psw & PSW_C) != 0) || ((psw & PSW_Z) != 0));
-        return ((instr & 0400) == 0) ? !value : value;
-    }
-    if (instr >= 0102000 && instr <= 0102777)  // BVC, BVS
-    {
-        _sntprintf(buffer, buffersize - 1, _T("V=%c"), (psw & PSW_V) ? '1' : '0');
-        // BVC: IF (V == 0)
-        // BVS: IF (V == 1)
-        BOOL value = ((psw & PSW_V) != 0);
-        return ((instr & 0400) == 0) ? !value : value;
-    }
-    if (instr >= 0103000 && instr <= 0103777)  // BCC/BHIS, BCS/BLO
-    {
-        _sntprintf(buffer, buffersize - 1, _T("C=%c"), (psw & PSW_C) ? '1' : '0');
-        // BCC/BHIS: IF (C == 0)
-        // BCS/BLO:  IF (C == 1)
-        BOOL value = ((psw & PSW_C) != 0);
-        return ((instr & 0400) == 0) ? !value : value;
-    }
-    if (instr >= 0077000 && instr <= 0077777)  // SOB
-    {
-        int reg = (instr >> 6) & 7;
-        uint16_t regvalue = pProc->GetReg(reg);
-        _sntprintf(buffer, buffersize - 1, _T("R%d=%06o"), reg, regvalue);  // "RN=XXXXXX"
-        return (regvalue != 1);
-    }
-
-    if (instr >= 004000 && instr <= 004677)  // JSR (except CALL)
-    {
-        int reg = (instr >> 6) & 7;
-        uint16_t regvalue = pProc->GetReg(reg);
-        _sntprintf(buffer, buffersize - 1, _T("R%d=%06o"), reg, regvalue);  // "RN=XXXXXX"
-        return TRUE;
-    }
-    if (instr >= 000200 && instr <= 000207)  // RTS / RETURN
-    {
-        uint16_t spvalue = pProc->GetSP();
-        int addrtype;
-        uint16_t value = pMemCtl->GetWordView(spvalue, pProc->IsHaltMode(), FALSE, &addrtype);
-        if (instr == 000207)  // RETURN
-            _sntprintf(buffer, buffersize - 1, _T("(SP)=%06o"), value);  // "(SP)=XXXXXX"
-        else  // RTS
-        {
-            int reg = instr & 7;
-            uint16_t regvalue = pProc->GetReg(reg);
-            _sntprintf(buffer, buffersize - 1, _T("R%d=%06o, (SP)=%06o"), reg, regvalue, value);  // "RN=XXXXXX, (SP)=XXXXXX"
-        }
-        return TRUE;
-    }
-
-    if (instr == 000002 || instr == 000006)  // RTI, RTT
-    {
-        uint16_t spvalue = pProc->GetSP();
-        int addrtype;
-        uint16_t value = pMemCtl->GetWordView(spvalue, pProc->IsHaltMode(), FALSE, &addrtype);
-        _sntprintf(buffer, buffersize - 1, _T("(SP)=%06o"), value);  // "(SP)=XXXXXX"
-        return TRUE;
-    }
-    if (instr == 000003 || instr == 000004 ||  // IOT, BPT
-        (instr >= 0104000 && instr <= 0104777))  // TRAP, EMT
-    {
-        uint16_t intvec;
-        if (instr == 000003) intvec = 000014;
-        else if (instr == 000004) intvec = 000020;
-        else if (instr < 0104400) intvec = 000030;
-        else intvec = 000034;
-
-        int addrtype;
-        uint16_t value = pMemCtl->GetWordView(intvec, pProc->IsHaltMode(), FALSE, &addrtype);
-        _sntprintf(buffer, buffersize - 1, _T("(%06o)=%06o"), intvec, value);  // "(VVVVVV)=XXXXXX"
-        return TRUE;
-    }
-
-    return TRUE;  // All other jumps are non-conditional
-}
-
-void DisasmView_RegisterHint(const CProcessor * pProc, const CMemoryController * pMemCtl,
-        LPTSTR hint1, LPTSTR hint2,
-        int regnum, int regmod, bool byteword, uint16_t indexval)
-{
-    const size_t hintsize = 20;
-    int addrtype = 0;
-    uint16_t regval = pProc->GetReg(regnum);
-    uint16_t srcval2 = 0;
-
-    _sntprintf(hint1, hintsize - 1, _T("%s=%06o"), REGISTER_NAME[regnum], regval);  // "RN=XXXXXX"
-    switch (regmod)
-    {
-    case 1:
-    case 2:
-        srcval2 = pMemCtl->GetWordView(regval, pProc->IsHaltMode(), false, &addrtype);
-        if (byteword)
-        {
-            srcval2 = (regval & 1) ? (srcval2 >> 8) : (srcval2 & 0xff);
-            _sntprintf(hint2, hintsize - 1, _T("(%s)=%03o"), REGISTER_NAME[regnum], srcval2);  // "(RN)=XXX"
-        }
-        else
-        {
-            _sntprintf(hint2, hintsize - 1, _T("(%s)=%06o"), REGISTER_NAME[regnum], srcval2);  // "(RN)=XXXXXX"
-        }
-        break;
-    case 3:
-        srcval2 = pMemCtl->GetWordView(regval, pProc->IsHaltMode(), false, &addrtype);
-        _sntprintf(hint2, hintsize - 1, _T("(%s)=%06o"), REGISTER_NAME[regnum], srcval2);  // "(RN)=XXXXXX"
-        //TODO: Show the real value in hint line 3
-        break;
-    case 4:
-        if (byteword)
-        {
-            srcval2 = (regval & 1) ?
-                    ((pMemCtl->GetWordView(regval - 1, pProc->IsHaltMode(), false, &addrtype)) & 0xff) :
-                    ((pMemCtl->GetWordView(regval - 2, pProc->IsHaltMode(), false, &addrtype)) >> 8);
-            _sntprintf(hint2, hintsize - 1, _T("(%s-1)=%03o"), REGISTER_NAME[regnum], srcval2);  // "(RN-1)=XXX"
-        }
-        else
-        {
-            srcval2 = pMemCtl->GetWordView(regval - 2, pProc->IsHaltMode(), false, &addrtype);
-            _sntprintf(hint2, hintsize - 1, _T("(%s-2)=%06o"), REGISTER_NAME[regnum], srcval2);  // "(RN-2)=XXXXXX"
-        }
-        break;
-    case 5:
-        srcval2 = pMemCtl->GetWordView(regval - 2, pProc->IsHaltMode(), false, &addrtype);
-        _sntprintf(hint2, hintsize - 1, _T("(%s-2)=%06o"), REGISTER_NAME[regnum], srcval2);  // "(RN+2)=XXXXXX"
-        //TODO: Show the real value in hint line 3
-        break;
-    case 6:
-        {
-            uint16_t addr2 = regval + indexval;
-            srcval2 = pMemCtl->GetWordView(addr2 & ~1, pProc->IsHaltMode(), false, &addrtype);
-            if (byteword)
-            {
-                srcval2 = (addr2 & 1) ? (srcval2 >> 8) : (srcval2 & 0xff);
-                _sntprintf(hint2, hintsize - 1, _T("(%s+%06o)=%03o"), REGISTER_NAME[regnum], indexval, srcval2);  // "(RN+NNNNNN)=XXX"
-            }
-            else
-            {
-                _sntprintf(hint2, hintsize - 1, _T("(%s+%06o)=%06o"), REGISTER_NAME[regnum], indexval, srcval2);  // "(RN+NNNNNN)=XXXXXX"
-            }
-            break;
-        }
-    case 7:
-        srcval2 = pMemCtl->GetWordView(regval + indexval, pProc->IsHaltMode(), false, &addrtype);
-        _sntprintf(hint2, hintsize - 1, _T("(%s+%06o)=%06o"), REGISTER_NAME[regnum], indexval, srcval2);  // "(RN+NNNNNN)=XXXXXX"
-        //TODO: Show the real value in hint line 3
-        break;
-    }
-}
-
-void DisasmView_RegisterHintPC(const CProcessor * pProc, const CMemoryController * pMemCtl,
-        LPTSTR hint1, LPTSTR /*hint2*/,
-        int regmod, bool byteword, uint16_t curaddr, uint16_t value)
-{
-    const size_t hintsize = 20;
-    int addrtype = 0;
-    uint16_t srcval2 = 0;
-
-    //TODO: else if (regmod == 2)
-    if (regmod == 3)
-    {
-        srcval2 = pMemCtl->GetWordView(value, pProc->IsHaltMode(), false, &addrtype);
-        if (byteword)
-        {
-            srcval2 = (value & 1) ? (srcval2 >> 8) : (srcval2 & 0xff);
-            _sntprintf(hint1, hintsize - 1, _T("(%06o)=%03o"), value, srcval2);  // "(NNNNNN)=XXX"
-        }
-        else
-        {
-            _sntprintf(hint1, hintsize - 1, _T("(%06o)=%06o"), value, srcval2);  // "(NNNNNN)=XXXXXX"
-        }
-    }
-    else if (regmod == 6)
-    {
-        uint16_t addr2 = curaddr + value;
-        srcval2 = pMemCtl->GetWordView(addr2, pProc->IsHaltMode(), false, &addrtype);
-        if (byteword)
-        {
-            srcval2 = (addr2 & 1) ? (srcval2 >> 8) : (srcval2 & 0xff);
-            _sntprintf(hint1, hintsize - 1, _T("(%06o)=%03o"), addr2, srcval2);  // "(NNNNNN)=XXX"
-        }
-        else
-        {
-            _sntprintf(hint1, hintsize - 1, _T("(%06o)=%06o"), addr2, srcval2);  // "(NNNNNN)=XXXXXX"
-        }
-    }
-    //TODO: else if (regmod == 7)
-}
-
-void DisasmView_InstructionHint(const uint16_t* memory, const CProcessor * pProc, const CMemoryController * pMemCtl,
-        LPTSTR buffer, LPTSTR buffer2,
-        int srcreg, int srcmod, int dstreg, int dstmod)
-{
-    const size_t buffersize = 42;
-    const size_t hintsize = 20;
-    TCHAR srchint1[hintsize] = { 0 }, dsthint1[hintsize] = { 0 };
-    TCHAR srchint2[hintsize] = { 0 }, dsthint2[hintsize] = { 0 };
-    bool byteword = ((*memory) & 0100000) != 0;  // Byte mode (true) or Word mode (false)
-    const uint16_t* curmemory = memory + 1;
-    uint16_t curaddr = pProc->GetPC() + 2;
-    uint16_t indexval = 0;
-
-    if (srcreg >= 0)
-    {
-        if (srcreg == 7)
-        {
-            uint16_t value = *(curmemory++);  curaddr += 2;
-            DisasmView_RegisterHintPC(pProc, pMemCtl, srchint1, srchint2, srcmod, byteword, curaddr, value);
-        }
-        else
-        {
-            if (srcmod == 6 || srcmod == 7) { indexval = *(curmemory++);  curaddr += 2; }
-            DisasmView_RegisterHint(pProc, pMemCtl, srchint1, srchint2, srcreg, srcmod, byteword, indexval);
-        }
-    }
-    if (dstreg >= 0)
-    {
-        if (dstreg == 7)
-        {
-            uint16_t value = *(curmemory++);  curaddr += 2;
-            DisasmView_RegisterHintPC(pProc, pMemCtl, dsthint1, dsthint2, dstmod, byteword, curaddr, value);
-        }
-        else
-        {
-            if (dstmod == 6 || dstmod == 7) { indexval = *(curmemory++);  curaddr += 2; }
-            DisasmView_RegisterHint(pProc, pMemCtl, dsthint1, dsthint2, dstreg, dstmod, byteword, indexval);
-        }
-    }
-
-    // Prepare 1st line of the instruction hint
-    if (*srchint1 != 0 && *dsthint1 != 0)
-    {
-        if (_tcscmp(srchint1, dsthint1) != 0)
-            _sntprintf(buffer, buffersize - 1, _T("%s, %s"), srchint1, dsthint1);
-        else
-        {
-            _tcscpy_s(buffer, buffersize, srchint1);
-            *dsthint1 = 0;
-        }
-    }
-    else if (*srchint1 != 0)
-        _tcscpy_s(buffer, buffersize, srchint1);
-    else if (*dsthint1 != 0)
-        _tcscpy_s(buffer, buffersize, dsthint1);
-
-    // Prepare 2nd line of the instruction hint
-    if (*srchint2 != 0 && *dsthint2 != 0)
-    {
-        if (_tcscmp(srchint2, dsthint2) == 0)
-            _tcscpy_s(buffer2, buffersize, srchint2);
-        else
-            _sntprintf(buffer2, buffersize - 1, _T("%s, %s"), srchint2, dsthint2);
-    }
-    else if (*srchint2 != 0)
-        _tcscpy_s(buffer2, buffersize, srchint2);
-    else if (*dsthint2 != 0)
-    {
-        if (*srchint1 == 0 || *dsthint1 == 0)
-            _tcscpy_s(buffer2, buffersize, dsthint2);
-        else
-        {
-            // Special case: we have srchint1, dsthint1 and dsthint2, but not srchint2 - let's align dsthint2 to dsthint1
-            size_t hintpos = _tcslen(srchint1) + 2;
-            for (size_t i = 0; i < hintpos; i++) buffer2[i] = _T(' ');
-            _tcscpy_s(buffer2 + hintpos, buffersize - hintpos, dsthint2);
-        }
-    }
-}
-
-// Prepare "Instruction Hint" for a regular instruction (not a branch/jump one)
-// buffer, buffer2 - buffers for 1st and 2nd lines of the instruction hint, min size 42
-// Returns: number of hint lines; 0 = no hints
-int DisasmView_GetInstructionHint(const uint16_t* memory, const CProcessor * pProc,
-        const CMemoryController * pMemCtl,
-        LPTSTR buffer, LPTSTR buffer2)
-{
-    const size_t buffersize = 42;
-    *buffer = 0;  *buffer2 = 0;
-    uint16_t instr = *memory;
-
-    // Source and Destination
-    if ((instr & ~(uint16_t)0107777) == PI_MOV || (instr & ~(uint16_t)0107777) == PI_CMP ||
-        (instr & ~(uint16_t)0107777) == PI_BIT || (instr & ~(uint16_t)0107777) == PI_BIC || (instr & ~(uint16_t)0107777) == PI_BIS ||
-        (instr & ~(uint16_t)0007777) == PI_ADD || (instr & ~(uint16_t)0007777) == PI_SUB)
-    {
-        int srcreg = (instr >> 6) & 7;
-        int srcmod = (instr >> 9) & 7;
-        int dstreg = instr & 7;
-        int dstmod = (instr >> 3) & 7;
-        DisasmView_InstructionHint(memory, pProc, pMemCtl, buffer, buffer2, srcreg, srcmod, dstreg, dstmod);
-    }
-
-    // Register and Destination
-    if ((instr & ~(uint16_t)0777) == PI_MUL || (instr & ~(uint16_t)0777) == PI_DIV ||
-        (instr & ~(uint16_t)0777) == PI_ASH || (instr & ~(uint16_t)0777) == PI_ASHC ||
-        (instr & ~(uint16_t)0777) == PI_XOR)
-    {
-        int srcreg = (instr >> 6) & 7;
-        int dstreg = instr & 7;
-        int dstmod = (instr >> 3) & 7;
-        DisasmView_InstructionHint(memory, pProc, pMemCtl, buffer, buffer2, srcreg, 0, dstreg, dstmod);
-    }
-
-    // Destination only
-    if ((instr & ~(uint16_t)0100077) == PI_CLR || (instr & ~(uint16_t)0100077) == PI_COM ||
-        (instr & ~(uint16_t)0100077) == PI_INC || (instr & ~(uint16_t)0100077) == PI_DEC || (instr & ~(uint16_t)0100077) == PI_NEG ||
-        (instr & ~(uint16_t)0100077) == PI_TST ||
-        (instr & ~(uint16_t)0100077) == PI_ASR || (instr & ~(uint16_t)0100077) == PI_ASL ||
-        (instr & ~(uint16_t)077) == PI_SWAB || (instr & ~(uint16_t)077) == PI_SXT ||
-        (instr & ~(uint16_t)077) == PI_MTPS || (instr & ~(uint16_t)077) == PI_MFPS)
-    {
-        int dstreg = instr & 7;
-        int dstmod = (instr >> 3) & 7;
-        DisasmView_InstructionHint(memory, pProc, pMemCtl, buffer, buffer2, -1, -1, dstreg, dstmod);
-    }
-
-    // ADC, SBC, ROR, ROL: destination only, and also show C flag
-    if ((instr & ~(uint16_t)0100077) == PI_ADC || (instr & ~(uint16_t)0100077) == PI_SBC ||
-        (instr & ~(uint16_t)0100077) == PI_ROR || (instr & ~(uint16_t)0100077) == PI_ROL)
-    {
-        int dstreg = instr & 7;
-        int dstmod = (instr >> 3) & 7;
-        if (dstreg != 7)
-        {
-            TCHAR tempbuf[buffersize];
-            DisasmView_InstructionHint(memory, pProc, pMemCtl, tempbuf, buffer2, -1, -1, dstreg, dstmod);
-            uint16_t psw = pProc->GetPSW();
-            _sntprintf(buffer, buffersize - 1, _T("%s, C=%c"), tempbuf, (psw & PSW_C) ? '1' : '0');  // "..., C=X"
-        }
-    }
-
-    // CLC..CCC, SEC..SCC -- show flags
-    if (instr >= 0000241 && instr <= 0000257 || instr >= 0000261 && instr <= 0000277)
-    {
-        uint16_t psw = pProc->GetPSW();
-        _sntprintf(buffer, buffersize - 1, _T("C=%c, V=%c, Z=%c, N=%c"),
-                (psw & PSW_C) ? '1' : '0', (psw & PSW_V) ? '1' : '0', (psw & PSW_Z) ? '1' : '0', (psw & PSW_N) ? '1' : '0');
-    }
-
-    // JSR, JMP -- show non-trivial cases only
-    if ((instr & ~(uint16_t)0777) == PI_JSR && (instr & 077) != 067 && (instr & 077) != 037 ||
-        (instr & ~(uint16_t)077) == PI_JMP && (instr & 077) != 067 && (instr & 077) != 037)
-    {
-        int dstreg = instr & 7;
-        int dstmod = (instr >> 3) & 7;
-        DisasmView_InstructionHint(memory, pProc, pMemCtl, buffer, buffer2, -1, -1, dstreg, dstmod);
-    }
-
-    // HALT mode commands
-    if (instr == PI_MFUS)
-    {
-        _sntprintf(buffer, buffersize - 1, _T("R5=%06o, R0=%06o"), pProc->GetReg(5), pProc->GetReg(0));  // "R5=XXXXXX, R0=XXXXXX"
-    }
-    if (instr == PI_MTUS)
-    {
-        _sntprintf(buffer, buffersize - 1, _T("R0=%06o, R5=%06o"), pProc->GetReg(0), pProc->GetReg(5));  // "R0=XXXXXX, R5=XXXXXX"
-    }
-    //TODO: MFPC, MTPC
-
-    //TODO: MARK
-
-    int result = 0;
-    if (*buffer != 0)
-        result = 1;
-    if (*buffer2 != 0)
-        result = 2;
-    return result;
-}
-
 // Update after Run or Step
 void DisasmView_OnUpdate()
 {
@@ -1106,17 +652,17 @@ void DisasmView_OnUpdate()
 
                 if (!m_okDisasmSubtitles)  //NOTE: Subtitles can move lines down
                 {
-                    if (DisasmView_CheckForJump(memory + index, &pLineItem->jumpdelta))
+                    if (Disasm_CheckForJump(memory + index, &pLineItem->jumpdelta))
                     {
                         pLineItem->type |= LINETYPE_JUMP;
                     }
 
                     if (address == proccurrent)  // For current instruction, prepare the instruction hints
                     {
-                        m_okDisasmJumpPredict = DisasmView_GetJumpConditionHint(memory + index, pProc, pMemCtl, m_strDisasmHint);
+                        m_okDisasmJumpPredict = Disasm_GetJumpConditionHint(memory + index, pProc, pMemCtl, m_strDisasmHint);
                         if (*m_strDisasmHint == 0)  // we don't have the jump hint
                         {
-                            DisasmView_GetInstructionHint(memory + index, pProc, pMemCtl, m_strDisasmHint, m_strDisasmHint2);
+                            Disasm_GetInstructionHint(memory + index, pProc, pMemCtl, m_strDisasmHint, m_strDisasmHint2);
                         }
                     }
                 }
@@ -1177,7 +723,7 @@ void DisasmView_DoDraw(HDC hdc)
 
     // Draw disassembly for the current processor
     uint16_t prevPC = (m_okDisasmProcessor) ? g_wEmulatorPrevCpuPC : g_wEmulatorPrevPpuPC;
-    int yFocus = DisasmView_DrawDisassemble(hdc, pDisasmPU, m_wDisasmBaseAddr, prevPC, 0, 2 + 0 * cyLine);
+    int yFocus = DisasmView_DrawDisassemble(hdc, pDisasmPU, m_wDisasmBaseAddr, prevPC);
 
     SetTextColor(hdc, colorOld);
     SelectObject(hdc, hOldFont);
@@ -1208,13 +754,15 @@ void DisasmView_DrawBreakpoint(HDC hdc, int x, int y, int size)
     VERIFY(::DeleteObject(hBreakBrush));
 }
 
-int DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, uint16_t current, uint16_t previous, int x, int y)
+int DisasmView_DrawDisassemble(HDC hdc, const CProcessor* pProc, uint16_t current, uint16_t previous)
 {
     int result = -1;
     m_nDisasmCurrentLineIndex = -1;
 
     int cxChar, cyLine;  GetFontWidthAndHeight(hdc, &cxChar, &cyLine);
-    m_cxDisasmBreakpointZone = x + cxChar * 2;
+    int x = 32 + 4 - cxChar * 4;
+    int y = 2;
+    m_cxDisasmBreakpointZone = cxChar * 5 / 2;
     m_cyDisasmLine = cyLine;
     COLORREF colorText = Settings_GetColor(ColorDebugText);
     COLORREF colorPrev = Settings_GetColor(ColorDebugPrevious);
@@ -1225,6 +773,14 @@ int DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, uint16_t current, uin
     ::SetTextColor(hdc, colorText);
 
     uint16_t proccurrent = pProc->GetPC();
+
+    // Draw breakpoint zone
+    COLORREF colorBreakptZone = Settings_GetColor(ColorDebugBreakptZone);
+    HBRUSH hBrushBreakptZone = ::CreateSolidBrush(colorBreakptZone);
+    HGDIOBJ hBrushOld = ::SelectObject(hdc, hBrushBreakptZone);
+    ::PatBlt(hdc, 0, 0, m_cxDisasmBreakpointZone, cyLine * MAX_DISASMLINECOUNT, PATCOPY);
+    ::SelectObject(hdc, hBrushOld);
+    VERIFY(::DeleteObject(hBrushBreakptZone));
 
     // Draw current line background
     if (!m_okDisasmSubtitles)  //NOTE: Subtitles can move lines down
@@ -1251,7 +807,7 @@ int DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, uint16_t current, uin
             LPCTSTR strBlockSubtitle = pLineItem->pSubItem->comment;
 
             ::SetTextColor(hdc, colorSubtitle);
-            TextOut(hdc, x + 21 * cxChar, y, strBlockSubtitle, (int) _tcslen(strBlockSubtitle));
+            TextOut(hdc, x + 21 * cxChar, y, strBlockSubtitle, static_cast<int>(_tcslen(strBlockSubtitle)));
             ::SetTextColor(hdc, colorText);
 
             y += cyLine;
@@ -1260,7 +816,7 @@ int DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, uint16_t current, uin
 
         if (Emulator_IsBreakpoint(m_okDisasmProcessor, address))  // Breakpoint
         {
-            DisasmView_DrawBreakpoint(hdc, x + cxChar / 2, y, cyLine);
+            DisasmView_DrawBreakpoint(hdc, cxChar / 2, y, cyLine);
         }
 
         DrawOctalValue(hdc, x + 5 * cxChar, y, address);  // Address
@@ -1292,8 +848,8 @@ int DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, uint16_t current, uin
             LPCTSTR strInstr = pLineItem->strInstr;
             LPCTSTR strArg = pLineItem->strArg;
             ::SetTextColor(hdc, colorText);
-            TextOut(hdc, x + 21 * cxChar, y, strInstr, (int)_tcslen(strInstr));
-            TextOut(hdc, x + 29 * cxChar, y, strArg, (int)_tcslen(strArg));
+            TextOut(hdc, x + 21 * cxChar, y, strInstr, static_cast<int>(_tcslen(strInstr)));
+            TextOut(hdc, x + 29 * cxChar, y, strArg, static_cast<int>(_tcslen(strArg)));
             posAfterArgs += _tcslen(strArg);
         }
 
@@ -1304,7 +860,7 @@ int DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, uint16_t current, uin
             if (strComment != nullptr)
             {
                 ::SetTextColor(hdc, colorSubtitle);
-                TextOut(hdc, x + 52 * cxChar, y, strComment, (int)_tcslen(strComment));
+                TextOut(hdc, x + 52 * cxChar, y, strComment, static_cast<int>(_tcslen(strComment)));
                 ::SetTextColor(hdc, colorText);
             }
         }
@@ -1329,9 +885,9 @@ int DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, uint16_t current, uin
             {
                 COLORREF hintcolor = Settings_GetColor(isjump ? ColorDebugJumpHint : ColorDebugHint);
                 ::SetTextColor(hdc, hintcolor);
-                TextOut(hdc, x + 52 * cxChar, y, m_strDisasmHint, (int)_tcslen(m_strDisasmHint));
+                TextOut(hdc, x + 52 * cxChar, y, m_strDisasmHint, static_cast<int>(_tcslen(m_strDisasmHint)));
                 if (*m_strDisasmHint2 != 0)
-                    TextOut(hdc, x + 52 * cxChar, y + cyLine, m_strDisasmHint2, (int)_tcslen(m_strDisasmHint2));
+                    TextOut(hdc, x + 52 * cxChar, y + cyLine, m_strDisasmHint2, static_cast<int>(_tcslen(m_strDisasmHint2)));
                 ::SetTextColor(hdc, colorText);
             }
         }

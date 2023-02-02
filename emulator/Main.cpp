@@ -35,6 +35,24 @@ BOOL InitInstance(HINSTANCE, int);
 void DoneInstance();
 void ParseCommandLine();
 
+LPCTSTR g_CommandLineHelp =
+    _T("Usage: UKNCBTL [options]\r\n\r\n")
+    _T("Command line options:\r\n\r\n")
+    _T("/h /help\r\n\tShow command line options (this box)\r\n")
+    _T("/boot\r\n\tAuto-start the emulation, select boot from disk\r\n")
+    _T("/bootN\r\n\tAuto-start the emulation, select boot menu item N=1..7\r\n")
+    _T("/autostart /autostarton\r\n\tStart emulation on window open\r\n")
+    _T("/noautostart /autostartoff\r\n\tDo not start emulation on window open\r\n")
+    _T("/debug /debugon /debugger\r\n\tSwitch to debug mode\r\n")
+    _T("/nodebug /debugoff\r\n\tSwitch off the debug mode\r\n")
+    _T("/sound /soundon\r\n\tTurn sound on\r\n")
+    _T("/nosound /soundoff\r\n\tTurn sound off\r\n")
+    _T("/fullscreen /fullscreenon\r\n\tSwitch to fullscreen mode\r\n")
+    _T("/windowed /fullscreenoff\r\n\tSwitch to windowed mode\r\n")
+    _T("/diskN:filePath\r\n\tAttach disk image, N=0..3\r\n")
+    _T("/cartN:filePath\r\n\tAttach cartridge image, N=1..2\r\n")
+    _T("/hardN:filePath\r\n\tAttach hard disk image, N=1..2\r\n");
+
 
 //////////////////////////////////////////////////////////////////////
 
@@ -70,6 +88,9 @@ int APIENTRY _tWinMain(
 
     HACCEL hAccelTable = ::LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_APPLICATION));
 
+    if (Option_ShowHelp)
+        ::PostMessage(g_hwnd, WM_COMMAND, ID_HELP_COMMAND_LINE_HELP, NULL);
+
     LARGE_INTEGER nPerformanceFrequency;
     ::QueryPerformanceFrequency(&nPerformanceFrequency);
 
@@ -91,9 +112,11 @@ int APIENTRY _tWinMain(
             if (!Emulator_SystemFrame())  // Breakpoint hit
             {
                 Emulator_Stop();
-                // Turn on degugger if not yet
+                // Turn on debugger if not yet
                 if (!Settings_GetDebug())
                     ::PostMessage(g_hwnd, WM_COMMAND, ID_VIEW_DEBUG, 0);
+                else
+                    ::FlashWindow(g_hwnd, TRUE);
             }
 
             ScreenView_RedrawScreen();
@@ -183,6 +206,7 @@ BOOL InitInstance(HINSTANCE /*hInstance*/, int /*nCmdShow*/)
     if (!Emulator_Init())
         return FALSE;
     Emulator_SetSound(Settings_GetSound() != 0);
+    Emulator_SetSoundAY(Settings_GetSoundAY() != 0);
     Emulator_SetSpeed(Settings_GetRealSpeed());
 
     if (!CreateMainWindow())
@@ -213,7 +237,11 @@ void ParseCommandLine()
     {
         LPTSTR arg = args[curargn];
 
-        if (_tcslen(arg) >= 5 && _tcsncmp(arg, _T("/boot"), 5) == 0)
+        if (_tcscmp(arg, _T("/help")) == 0 || _tcscmp(arg, _T("/h")) == 0)
+        {
+            Option_ShowHelp = true;
+        }
+        else if (_tcslen(arg) >= 5 && _tcsncmp(arg, _T("/boot"), 5) == 0)
         {
             Option_AutoBoot = 1;
             if (_tcslen(arg) >= 6 && arg[5] >= _T('1') && arg[5] <= _T('7'))

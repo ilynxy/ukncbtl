@@ -27,6 +27,7 @@
 #define IDD_DCB_EDITOR                  149
 #define IDB_KEYBOARDMASK                150
 #define IDD_CONFIGDLG                   151
+#define IDD_COMMANDLINEHELP             152
 #define IDC_EDIT1                       1000
 #define IDC_BUILDDATE                   1001
 #define IDC_EDIT2                       1002
@@ -96,7 +97,8 @@
 #define ID_EMULATOR_PARALLEL            32827
 #define ID_EMULATOR_NETWORK             32828
 #define ID_EMULATOR_SOUND               32831
-#define ID_VIEW_ONSCREENDISPLAY         32832
+#define ID_EMULATOR_SOUNDAY             32832
+#define ID_VIEW_ONSCREENDISPLAY         32833
 #define ID_VIEW_RENDERMODE              32847
 #define ID_VIEW_RENDERMODE1             32848
 #define ID_VIEW_RENDERMODE2             32849
@@ -136,6 +138,7 @@
 #define ID_DEBUG_COPY_ADDRESS           32899
 #define ID_DEBUG_COPY_VALUE             32900
 #define ID_DEBUG_GOTO_ADDRESS           32901
+#define ID_HELP_COMMAND_LINE_HELP       32921
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -143,7 +146,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        152
+#define _APS_NEXT_RESOURCE_VALUE        153
 #define _APS_NEXT_COMMAND_VALUE         32999
 #define _APS_NEXT_CONTROL_VALUE         1035
 #define _APS_NEXT_SYMED_VALUE           110

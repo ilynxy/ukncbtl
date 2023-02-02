@@ -28,6 +28,8 @@ extern HINSTANCE g_hInst; // current instance
 
 extern HWND g_hwnd;  // Main window handle
 
+extern LPCTSTR g_CommandLineHelp;
+
 void MainWindow_RegisterClass();
 BOOL CreateMainWindow();
 void MainWindow_RestoreSettings();
@@ -135,8 +137,10 @@ enum ColorIndices
     ColorDebugJumpHint      = 13,
     ColorDebugHint          = 14,
     ColorDebugBreakpoint    = 15,
+    ColorDebugHighlight     = 16,
+    ColorDebugBreakptZone   = 17,
 
-    ColorIndicesCount       = 16,
+    ColorIndicesCount       = 18,
 };
 
 
@@ -214,6 +218,8 @@ WORD Settings_GetRealSpeed();
 void Settings_SetSound(BOOL flag);
 BOOL Settings_GetSound();
 void Settings_SetSoundVolume(WORD value);
+BOOL Settings_GetSoundAY();
+void Settings_SetSoundAY(BOOL flag);
 WORD Settings_GetSoundVolume();
 void Settings_SetToolbar(BOOL flag);
 BOOL Settings_GetToolbar();
@@ -261,6 +267,7 @@ void Settings_SetColor(ColorIndices colorIndex, COLORREF color);
 //////////////////////////////////////////////////////////////////////
 // Options
 
+extern bool Option_ShowHelp;
 extern int Option_AutoBoot;
 
 

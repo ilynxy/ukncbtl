@@ -63,6 +63,7 @@ void MainWindow_DoEmulatorAutostart();
 void MainWindow_DoEmulatorReset();
 void MainWindow_DoEmulatorSpeed(WORD speed);
 void MainWindow_DoEmulatorSound();
+void MainWindow_DoEmulatorSoundAY();
 void MainWindow_DoEmulatorSerial();
 void MainWindow_DoEmulatorParallel();
 void MainWindow_DoEmulatorNetwork();
@@ -79,7 +80,6 @@ void MainWindow_DoFileCreateDisk();
 void MainWindow_DoFileSettings();
 void MainWindow_DoFileSettingsColors();
 void MainWindow_DoFileSettingsOsd();
-void MainWindow_DoEmulatorConfiguration();
 void MainWindow_OnStatusbarClick(LPNMMOUSE lpnm);
 void MainWindow_OnStatusbarDrawItem(LPDRAWITEMSTRUCT);
 void MainWindow_OnToolbarGetInfoTip(LPNMTBGETINFOTIP);
@@ -871,6 +871,7 @@ void MainWindow_UpdateMenu()
     CheckMenuItem(hMenu, ID_EMULATOR_AUTOSTART, (Settings_GetAutostart() ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hMenu, ID_EMULATOR_SOUND, (Settings_GetSound() ? MF_CHECKED : MF_UNCHECKED));
     MainWindow_SetToolbarImage(ID_EMULATOR_SOUND, (Settings_GetSound() ? ToolbarImageSoundOn : ToolbarImageSoundOff));
+    CheckMenuItem(hMenu, ID_EMULATOR_SOUNDAY, (Settings_GetSoundAY() ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hMenu, ID_EMULATOR_SERIAL, (Settings_GetSerial() ? MF_CHECKED : MF_UNCHECKED));
     SendMessage(m_hwndToolbar, TB_CHECKBUTTON, ID_EMULATOR_SERIAL, (Settings_GetSerial() ? 1 : 0));
     CheckMenuItem(hMenu, ID_EMULATOR_NETWORK, (Settings_GetNetwork() ? MF_CHECKED : MF_UNCHECKED));
@@ -1039,6 +1040,9 @@ bool MainWindow_DoCommand(int commandId)
     case ID_EMULATOR_SOUND:
         MainWindow_DoEmulatorSound();
         break;
+    case ID_EMULATOR_SOUNDAY:
+        MainWindow_DoEmulatorSoundAY();
+        break;
     case ID_EMULATOR_SPEED25:
         MainWindow_DoEmulatorSpeed(0x7ffe);
         break;
@@ -1136,6 +1140,9 @@ bool MainWindow_DoCommand(int commandId)
         break;
     case IDM_ABOUT:
         ShowAboutBox();
+        break;
+    case ID_HELP_COMMAND_LINE_HELP:
+        ShowCommandLineHelpBox();
         break;
     case ID_VIEW_FULLSCREEN:
         MainWindow_DoViewFullscreen();
@@ -1286,6 +1293,15 @@ void MainWindow_DoEmulatorSound()
     Settings_SetSound(!Settings_GetSound());
 
     Emulator_SetSound(Settings_GetSound() != 0);
+
+    MainWindow_UpdateMenu();
+}
+
+void MainWindow_DoEmulatorSoundAY()
+{
+    Settings_SetSoundAY(!Settings_GetSoundAY());
+
+    Emulator_SetSoundAY(Settings_GetSoundAY() != 0);
 
     MainWindow_UpdateMenu();
 }
