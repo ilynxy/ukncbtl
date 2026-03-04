@@ -934,13 +934,13 @@ void Emulator_PrepareScreenRGB32(void* pImageBits, const uint32_t* colors)
             for (;;)
             {
                 uint32_t valueRGB;
-                if (cursorOn && (pos == cursorPos) && (!okCursorType || (okCursorType && bit == cursorAddress)))
-                    valueRGB = colors[cursorYRGB];  // 4-bit to 32-bit color
-                else
                 {
                     // Make 3-bit value from the bits
                     BYTE value012 = (src0 & 1) | ((src1 & 1) << 1) | ((src2 & 1) << 2);
                     valueRGB = palettecurrent[value012];  // 3-bit to 32-bit color
+                    if (cursorOn && (pos == cursorPos) && (!okCursorType || (okCursorType && bit == cursorAddress)))
+                        valueRGB |= colors[cursorYRGB];  // 4-bit to 32-bit color
+
                 }
 
                 // Put value to m_bits; repeat using scale value

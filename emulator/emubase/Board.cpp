@@ -14,6 +14,8 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "Emubase.h"
 #include "Board.h"
 
+#include "Floppy.hpp"
+#include "Hard.hpp"
 
 //////////////////////////////////////////////////////////////////////
 // Bus devices
@@ -291,7 +293,9 @@ void CMotherboard::Reset ()
     m_cputicks = 0;
     m_pputicks = 0;
     m_frameticks = 0;
+
     m_timer = 0;
+    m_timercounter = 0;
     m_timerreload = 0;
     m_timerflags = 0;
     m_timerdivider = 0;
@@ -520,6 +524,7 @@ void CMotherboard::ExecutePPU ()
     m_pPPU->Execute();
 }
 
+#if 0
 void CMotherboard::TimerTick() // Timer Tick, 2uS -- dividers are within timer routine
 {
     if ((m_timerflags & 1) == 0)  // Timer is off
@@ -576,7 +581,7 @@ void CMotherboard::TimerTick() // Timer Tick, 2uS -- dividers are within timer r
             m_pPPU->InterruptVIRQ(2, 0304);
         }
 
-        m_timer = m_timerreload & 07777; // Reload it
+        //m_timer = m_timerreload & 07777; // Reload it
     }
 }
 uint16_t CMotherboard::GetTimerValue()  // Returns current timer value
@@ -632,6 +637,151 @@ void CMotherboard::SetTimerState(uint16_t val) // Sets timer state
         break;
     }
 }
+#else
+void CMotherboard::TimerTick() // Timer Tick, 2uS -- dividers are within timer routine
+{
+    if ((m_timerflags & 1) == 0)  { // Timer is off
+        m_timercounter = m_timerreload & 07777;
+
+        // update only if zero-event and external event is inactive
+        if ((m_timerflags & 0240) == 0) {
+            m_timer = m_timercounter & 07777;
+        }
+
+        return;
+    }
+
+    m_timerdivider++;
+    int flag = 0;
+    switch ((m_timerflags >> 1) & 3)
+    {
+    case 0: //2uS
+        flag = 1;
+        m_timerdivider = 0;
+        break;
+    case 1: //4uS
+        if (m_timerdivider >= 2)
+        {
+            flag = 1;
+            m_timerdivider = 0;
+        }
+        break;
+    case 2: //8uS
+        if (m_timerdivider >= 4)
+        {
+            flag = 1;
+            m_timerdivider = 0;
+        }
+        break;
+    case 3:
+        if (m_timerdivider >= 8)
+        {
+            flag = 1;
+            m_timerdivider = 0;
+        }
+        break;
+    }
+    if (flag == 0)  // Nothing happened
+        return;
+
+    //if (m_timercounter == 0)
+    //    m_timercounter = m_timerreload & 07777;
+
+    //if (m_timercounter != 0)
+    {
+        m_timercounter --;
+        m_timercounter &= 07777;  // 12 bit only
+    }
+
+    // update only if zero-event and external event is inactive
+    if ((m_timerflags & 0240) == 0) {
+        m_timer = m_timercounter & 07777;
+    }
+
+    if (m_timercounter == 0)
+    {
+        if (m_timerflags & 0200)
+            m_timerflags |= 010;  // Overflow
+
+        m_timerflags |= 0200;  // 0
+
+        if ((m_timerflags & 0100) && (m_timerflags & 0200))
+        {
+            m_pPPU->InterruptVIRQ(2, 0304);
+        }
+
+        m_timercounter = m_timerreload & 07777;
+    }
+}
+
+uint16_t CMotherboard::GetTimerValue()  // Returns current timer value
+{
+//    if ((m_timerflags & 0240) == 0)
+//        return m_timer;
+
+    m_timerflags &= ~0240;  // Clear flags
+    uint16_t result = m_timer;
+//    m_timer = m_timercounter;
+    return result;
+
+//    uint16_t res = m_timer;
+//    m_timer = m_timerreload & 07777; // Reload it
+//    return res;
+}
+
+uint16_t CMotherboard::GetTimerReload()  // Returns timer reload value
+{
+    return m_timerreload;
+}
+uint16_t CMotherboard::GetTimerState() // Returns timer state
+{
+    uint16_t res = m_timerflags;
+    m_timerflags &= ~010;  // Clear overflow
+    return res;
+}
+
+void CMotherboard::SetTimerReload(uint16_t val)  // Sets timer reload value
+{
+    m_timerreload = val & 07777;
+//    if ((m_timerflags & 1) == 0)
+//        m_timer = m_timerreload;
+}
+
+void CMotherboard::SetTimerState(uint16_t val) // Sets timer state
+{
+    // 753   200 40 10
+//    if ((val & 1) && ((m_timerflags & 1) == 0))
+//        m_timer = m_timerreload & 07777;
+
+    m_timerflags &= 0250;  // Clear everything but bits 7,5,3
+    m_timerflags |= (val & (~0250));  // Preserve bits 753
+
+    switch ((m_timerflags >> 1) & 3)
+    {
+    case 0: //2uS
+        m_multiply = 8;
+        break;
+    case 1: //4uS
+        m_multiply = 4;
+        break;
+    case 2: //8uS
+        m_multiply = 2;
+        break;
+    case 3:
+        m_multiply = 1;
+        break;
+    }
+
+    if ( (m_timerflags & 0100) == 0 ) {
+        m_pPPU->InterruptVIRQ(2, 0);
+    }
+    else {
+        if (m_timerflags & 0200)
+            m_pPPU->InterruptVIRQ(2, 0304);
+    }
+}
+#endif
+
 
 void CMotherboard::DebugTicks()
 {
@@ -698,13 +848,15 @@ Some constants replaced to reflect frame rate change.
     { const uint16_t* pbps = m_CPUbps; while(*pbps != 0177777) { if (m_pCPU->GetPC() == *pbps++) { m_frameticks = frameticks; return false; } } } }
 #define SYSTEMFRAME_EXECUTE_BP_PPU  { m_pPPU->Execute(); if (m_PPUbps != nullptr) \
     { const uint16_t* pbps = m_PPUbps; while(*pbps != 0177777) { if (m_pPPU->GetPC() == *pbps++) { m_frameticks = frameticks; return false; } } } }
+
+#define FTICKS 10400
 bool CMotherboard::SystemFrame()
 {
     unsigned int frameticks = m_frameticks;  // 20000 ticks
-    const int audioticks = 20286 / (SAMPLERATE / 25); // TODO: What is it?
+//    const int audioticks = 20286 / (SAMPLERATE / 25); // TODO: What is it?
     m_SoundChanges = 0;
 
-    int serialBaudRate = 9600;
+    int serialBaudRate = 115200;//9600;
     if ( (m_SerialBaudRate >= 9600) && (m_SerialBaudRate <= 115200) )
       serialBaudRate = m_SerialBaudRate;
 
@@ -722,14 +874,19 @@ bool CMotherboard::SystemFrame()
         tapeBrasErr = 0;
     }
 
+    unsigned int cpu_fine_frac = 0;
+    const unsigned int cpu_fine_modulus = 100;
+    const unsigned int cpu_fine_step = 36;
+
     do
     {
         TimerTick();  // System timer tick
 
-        if (frameticks % 10000 == 0)
+        if (frameticks % FTICKS == 0)
             Tick50();  // 1/50 timer event
 
-        // CPU - 16 times, PPU - 12.5 times
+        // CPU (16/12.5*12)*10400   = 159744 cycles per frame
+        // PPU (12.5/12.5*12)*10400 = 124800 cycles per frame
         if (m_CPUbps == nullptr && m_PPUbps == nullptr)  // No breakpoints, no need to check
         {
             /*  0 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;
@@ -743,9 +900,14 @@ bool CMotherboard::SystemFrame()
             /*  8 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;  SYSTEMFRAME_EXECUTE_CPU;
             /*  9 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;
             /* 10 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;
-            /* 11 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;  SYSTEMFRAME_EXECUTE_CPU;
-            if ((frameticks & 1) == 0)  // (frameticks % 2 == 0) PPU extra ticks
-                SYSTEMFRAME_EXECUTE_PPU;
+            /* 11 */  SYSTEMFRAME_EXECUTE_CPU;  SYSTEMFRAME_EXECUTE_PPU;
+
+            // 12/12.5*16 = 15.36
+            cpu_fine_frac += cpu_fine_step;
+            if (cpu_fine_frac >= cpu_fine_modulus) {
+                cpu_fine_frac -= cpu_fine_modulus;
+                SYSTEMFRAME_EXECUTE_CPU;
+            }
         }
         else  // Have breakpoint, need to check
         {
@@ -760,14 +922,22 @@ bool CMotherboard::SystemFrame()
             /*  8 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;  SYSTEMFRAME_EXECUTE_BP_CPU;
             /*  9 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;
             /* 10 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;
-            /* 11 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;  SYSTEMFRAME_EXECUTE_BP_CPU;
-            if ((frameticks & 1) == 0)  // (frameticks % 2 == 0) PPU extra ticks
-                SYSTEMFRAME_EXECUTE_BP_PPU;
+            /* 11 */  SYSTEMFRAME_EXECUTE_BP_CPU;  SYSTEMFRAME_EXECUTE_BP_PPU;
+
+            // 12/12.5*16 = 15.36
+            cpu_fine_frac += cpu_fine_step;
+            if (cpu_fine_frac >= cpu_fine_modulus) {
+                cpu_fine_frac -= cpu_fine_modulus;
+                SYSTEMFRAME_EXECUTE_CPU;
+            }
         }
+
+        if ( (frameticks % 31) == 0 )
+            m_pFloppyCtl->Periodic();  // Each 32nd tick -- FDD tick
 
         if ((frameticks & 31) == 0)  // (frameticks % 32 == 0)
         {
-            m_pFloppyCtl->Periodic();  // Each 32nd tick -- FDD tick
+//            m_pFloppyCtl->Periodic();  // Each 32nd tick -- FDD tick
 
             // Keyboard processing
             CSecondMemoryController* pMemCtl = static_cast<CSecondMemoryController*>(m_pSecondMemCtl);
@@ -807,7 +977,7 @@ bool CMotherboard::SystemFrame()
         if (m_pHardDrives[1] != nullptr)
             m_pHardDrives[1]->Periodic();
 
-        if (frameticks % audioticks == 0) //AUDIO tick
+//        if (frameticks % audioticks == 0) //AUDIO tick
             DoSound();
 
         if (m_TapeReadCallback != nullptr || m_TapeWriteCallback != nullptr)
@@ -840,11 +1010,13 @@ bool CMotherboard::SystemFrame()
             CFirstMemoryController* pMemCtl = static_cast<CFirstMemoryController*>(m_pFirstMemCtl);
             if ((pMemCtl->m_Port176574 & 004) == 0)  // Not loopback?
             {
+                if ((pMemCtl->m_Port176570 & 0200) == 0) {
                 uint8_t b;
                 if (m_SerialInCallback(&b))
                 {
                     if (pMemCtl->SerialInput(b) && (pMemCtl->m_Port176570 & 0100))
                         m_pCPU->InterruptVIRQ(7, 0370);
+                }
                 }
             }
         }
@@ -940,14 +1112,14 @@ bool CMotherboard::SystemFrame()
         frameticks++;
     } 
 #if   FRAMERATE == 50
-    while (frameticks % 10000);
+    while (frameticks % FTICKS);
 #elif FRAMERATE == 25
     while (frameticks < 20000);
 #else
     #error "FRAMERATE have to be 25 or 50"
 #endif
 
-    m_frameticks = frameticks % 20000;
+    m_frameticks = frameticks % (FTICKS * 2);
     return true;
 }
 
@@ -1498,33 +1670,52 @@ uint16_t CMotherboard::GetKeyboardRegister(void)
 void CMotherboard::DoSound(void)
 {
     int global;
+#if 1
+    unsigned int bm = m_timercounter;
 
-    freq_out[0] = (m_timer >> 3) & 1; //8000
-    if (m_multiply >= 4)
-        freq_out[0] = 0;
+    //if (m_multiply >= 4)
+    //    freq_out[0] = 0;
 
-    freq_out[1] = (m_timer >> 6) & 1; //1000
-    freq_out[2] = (m_timer >> 7) & 1; //500
-    freq_out[3] = (m_timer >> 8) & 1; //250
-    freq_out[4] = (m_timer >> 10) & 1; //60
+    freq_out[0] = (bm >>  2) & 1;
+    freq_out[1] = (bm >>  5) & 1;
+    freq_out[2] = (bm >>  6) & 1;
+    freq_out[3] = (bm >>  7) & 1;
+    freq_out[4] = (bm >>  9) & 1;
 
-    global = !(freq_out[0] & freq_enable[0]) & ! (freq_out[1] & freq_enable[1]) & !(freq_out[2] & freq_enable[2]) & !(freq_out[3] & freq_enable[3]) & !(freq_out[4] & freq_enable[4]);
-    if (freq_enable[5] == 0)
-        global = 0;
-    else
-    {
-        if ( (!freq_enable[0]) && (!freq_enable[1]) && (!freq_enable[2]) && (!freq_enable[3]) && (!freq_enable[4]))
-            global = 1;
-    }
+    bool si0 = !               freq_enable[5];
 
-    if (m_SoundPrevValue == 0 && global != 0)
-        m_SoundChanges++;
+    bool si1 =  freq_out[0] && freq_enable[0];
+    bool si2 =  freq_out[1] && freq_enable[1];
+    bool si3 =  freq_out[2] && freq_enable[2];
+    bool si4 =  freq_out[3] && freq_enable[3];
+    bool si5 =  freq_out[4] && freq_enable[4];
+
+    bool so = !(si0 || si1 || si2 || si3 || si4 || si5);
+
+    global = !so;
+//    global = !(freq_out[0] & freq_enable[0]) & ! (freq_out[1] & freq_enable[1]) & !(freq_out[2] & freq_enable[2]) & !(freq_out[3] & freq_enable[3]) & !(freq_out[4] & freq_enable[4]);
+//
+//    if (freq_enable[5] == 0)
+//        global = 0;
+//    else
+//    {
+//        if ( (!freq_enable[0]) && (!freq_enable[1]) && (!freq_enable[2]) && (!freq_enable[3]) && (!freq_enable[4]))
+//            global = 1;
+//    }
+#endif
+
+    //if (m_SoundPrevValue == 0 && global != 0)
+    //    m_SoundChanges++;
+
+    m_SoundChanges += (m_SoundPrevValue != global);
+    m_SoundPrevValue = global;
 
     if (m_SoundGenCallback == nullptr)
         return;
 
-    uint8_t value = global ? 0xff : 0;
-    uint16_t value16 = value << 7;
+//    uint8_t value = global ? 0xff : 0;
+    const signed short amplitude = 8000;
+    uint16_t value16 = global ? +amplitude : -amplitude;
     (*m_SoundGenCallback)(value16, value16);
 }
 

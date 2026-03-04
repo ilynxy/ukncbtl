@@ -14,117 +14,32 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "Processor.h"
 #include "Emubase.h"
 
-
 // Timings ///////////////////////////////////////////////////////////
-
-uint16_t MOV_TIMING[8][8] =
-{
-    {0x000B, 0x0022, 0x0022, 0x0033, 0x0022, 0x0037, 0x0033, 0x0043},
-    {0x0020, 0x0031, 0x0037, 0x0043, 0x003B, 0x0047, 0x0043, 0x0054},
-    {0x0020, 0x0037, 0x0037, 0x0043, 0x003B, 0x0047, 0x0043, 0x0053},
-    {0x0025, 0x0043, 0x0043, 0x004F, 0x0047, 0x0054, 0x004F, 0x0060},
-    {0x0020, 0x0037, 0x0037, 0x0043, 0x003B, 0x0047, 0x0043, 0x0053},
-    {0x0025, 0x0043, 0x0043, 0x004F, 0x0047, 0x0054, 0x004F, 0x0060},
-    {0x0029, 0x0039, 0x003F, 0x004C, 0x003F, 0x004C, 0x004B, 0x005C},
-    {0x0035, 0x0045, 0x004C, 0x0057, 0x004C, 0x0057, 0x0057, 0x0068}
-};
-
-uint16_t MOVB_TIMING[8][8] =
-{
-    {0x000B, 0x0025, 0x002B, 0x0037, 0x002F, 0x003B, 0x003B, 0x0047},
-    {0x0018, 0x0035, 0x003B, 0x0047, 0x003F, 0x004C, 0x004B, 0x0057},
-    {0x0019, 0x003B, 0x003B, 0x0047, 0x0040, 0x004B, 0x004C, 0x0057},
-    {0x0025, 0x0047, 0x0047, 0x0054, 0x004B, 0x0057, 0x0057, 0x0063},
-    {0x0019, 0x003B, 0x003B, 0x0047, 0x0040, 0x004B, 0x004C, 0x0057},
-    {0x0025, 0x0047, 0x0047, 0x0054, 0x004B, 0x0057, 0x0057, 0x0063},
-    {0x0029, 0x003D, 0x0043, 0x004F, 0x0043, 0x004F, 0x0054, 0x005F},
-    {0x0035, 0x0049, 0x004F, 0x005B, 0x004F, 0x005B, 0x005F, 0x006C}
-};
-
-uint16_t CMP_TIMING[8][8] =
-{
-    {0x000B, 0x001C, 0x001D, 0x0029, 0x0021, 0x002D, 0x0035, 0x0041},
-    {0x0018, 0x002D, 0x002D, 0x0039, 0x0031, 0x003D, 0x0045, 0x0051},
-    {0x0019, 0x002D, 0x002D, 0x0039, 0x0031, 0x003D, 0x0045, 0x0051},
-    {0x0025, 0x0039, 0x0039, 0x0045, 0x003D, 0x0049, 0x0051, 0x005E},
-    {0x0019, 0x002D, 0x002D, 0x0039, 0x0031, 0x003D, 0x0045, 0x0051},
-    {0x0025, 0x0039, 0x0039, 0x0045, 0x003D, 0x0049, 0x0051, 0x005E},
-    {0x0029, 0x0035, 0x0035, 0x0041, 0x0035, 0x0041, 0x004D, 0x005A},
-    {0x0035, 0x0041, 0x0041, 0x004E, 0x0041, 0x004E, 0x005A, 0x0065}
-};
-
-uint16_t CLR_TIMING[8] =
-{
-    0x000B, 0x001C, 0x0023, 0x002F, 0x0023, 0x002F, 0x002F, 0x003F
-};
-
-uint16_t CLRB_TIMING[8] =
-{
-    0x000B, 0x0021, 0x0027, 0x0033, 0x0027, 0x0033, 0x0037, 0x0043
-};
-
-uint16_t TST_TIMING[8] =
-{
-    0x000B, 0x0018, 0x0019, 0x0025, 0x0019, 0x0025, 0x0031, 0x003D
-};
-
-uint16_t MTPS_TIMING[8] =
-{
-    0x0018, 0x0029, 0x0029, 0x0035, 0x0029, 0x0035, 0x0041, 0x004D
-};
-
-uint16_t XOR_TIMING[8] =
-{
-    0x000B, 0x0025, 0x002B, 0x0037, 0x002F, 0x003B, 0x003B, 0x0047
-};
-
-uint16_t ASH_TIMING[8] =
-{
-    0x0029, 0x003D, 0x003D, 0x0049, 0x0041, 0x004D, 0x0055, 0x0062
-};
-uint16_t ASH_S_TIMING = 0x0008;
-
-uint16_t ASHC_TIMING[8] =
-{
-    0x0039, 0x004E, 0x004D, 0x005A, 0x0051, 0x005D, 0x0066, 0x0072
-};
-uint16_t ASHC_S_TIMING = 0x0008;
-
-uint16_t MUL_TIMING[8] =
-{
-    0x0060, 0x00C7, 0x00C7, 0x00D4, 0x00CA, 0x00D8, 0x00E1, 0x00EC
-};
-
-uint16_t DIV_TIMING[8] =
-{
-    0x0080, 0x00E8, 0x00E7, 0x00F4, 0x00EB, 0x00F8, 0x0100, 0x010D
-};
-
-uint16_t JMP_TIMING[7] =
-{
-    0x002D, 0x002D, 0x003D, 0x002D, 0x003D, 0x0031, 0x0041
-};
-uint16_t JSR_TIMING[7] =
-{
-    0x0045, 0x0045, 0x0056, 0x0045, 0x0056, 0x0049, 0x0059
-};
-
-uint16_t BRANCH_TRUE_TIMING = 0x0025;
-uint16_t BRANCH_FALSE_TIMING = 0x0010;
-uint16_t BPT_TIMING = 0x0094;
-uint16_t EMT_TIMING = 0x009C;
-uint16_t RTI_TIMING = 0x0059;
-uint16_t RTS_TIMING = 0x0031;
-uint16_t NOP_TIMING = 0x0010;
-uint16_t SOB_TIMING = 0x002D;
-uint16_t SOB_LAST_TIMING = 0x0019; //last iteration of SOB
-uint16_t BR_TIMING = 0x0025;
-uint16_t MARK_TIMING = 0x0041;
-uint16_t RESET_TIMING = 105 + 968;  // ТО КМ1801ВМ2 стр. 134
+#include "kvant_031_instimes.hpp"
 
 
 //////////////////////////////////////////////////////////////////////
 
+#define P_EASRC     (0x00000001u)  // calculate EA of src
+#define P_RDSRC     (0x00000002u)  // fetch [EA(src)] (NOTE: read srcR only if used without EASRC)
+#define P_EADST     (0x00000004u)  // calculate EA of dst
+#define P_RDDST     (0x00000008u)  // fetch [EA(dst)] (NOTE: read dstR only if used without EADST)
+#define P_WRDST     (0x00000010u)  // writeback [EA(dst)] (NOTE: write dstR only if used without EADST)
+#define P_BYTE      (0x00000020u)  // BYTE operation
+#define P_IGBDR     (0x00000040u)  // ignore BYTE (do word) on writeback if destination is register (MOVB, MFPS)
+#define P_NOPSW     (0x00000080u)  // don't update PSW
+
+#define P_RDSRCPR   (0x00000100u)  // read source register's pair (EIS only)
+#define P_AFINV     (0x00000200u)  // arguments fetch inverse order (dst first, next src)
+//#define P_WRSRC     (0x00000000u)  // write source register (EIS only)
+//#define P_WRSRCPR   (0x00000000u)  // write source register's pair (EIS only)
+
+#define P_REASRC  (P_EASRC | P_RDSRC)
+#define P_READST  (P_EADST | P_RDDST)
+#define P_REAbDST (P_EADST | P_RDDST | P_BYTE)
+#define P_WRIDST  (P_EADST | P_WRDST)
+#define P_RMWDST  (P_EADST | P_RDDST | P_WRDST)
+#define P_RMWbDST (P_EADST | P_RDDST | P_WRDST | P_BYTE)
 
 CProcessor::ExecuteMethodRef* CProcessor::m_pExecuteMethodMap = nullptr;
 
@@ -133,6 +48,8 @@ CProcessor::ExecuteMethodRef* CProcessor::m_pExecuteMethodMap = nullptr;
         for (uint32_t opcode = (opstart); opcode <= (opend); opcode++) \
             m_pExecuteMethodMap[opcode] = (methodref); \
     }
+
+#define OLD_ALU 0
 
 void CProcessor::Init()
 {
@@ -165,9 +82,9 @@ void CProcessor::Init()
     RegisterMethodRef( 0000200, 0000207, &CProcessor::ExecuteRTS );  // RTS / RETURN
 
     RegisterMethodRef( 0000240, 0000257, &CProcessor::ExecuteCCC );
-
     RegisterMethodRef( 0000260, 0000277, &CProcessor::ExecuteSCC );
 
+#if PROCESSOR_USE_NEW_ALU == 0
     RegisterMethodRef( 0000300, 0000377, &CProcessor::ExecuteSWAB );
 
     RegisterMethodRef( 0000400, 0000777, &CProcessor::ExecuteBR );
@@ -178,8 +95,21 @@ void CProcessor::Init()
     RegisterMethodRef( 0003000, 0003377, &CProcessor::ExecuteBGT );
     RegisterMethodRef( 0003400, 0003777, &CProcessor::ExecuteBLE );
 
+#else
+    RegisterMethodRef( 0000300, 0000377, (&CProcessor::op_alu1<vm2::alu::opSWAB, P_RMWDST>));
+
+    RegisterMethodRef( 0000400, 0000777, &CProcessor::op_branch<&vm2::alu::condBR > );
+    RegisterMethodRef( 0001000, 0001377, &CProcessor::op_branch<&vm2::alu::condBNE> );
+    RegisterMethodRef( 0001400, 0001777, &CProcessor::op_branch<&vm2::alu::condBEQ> );
+    RegisterMethodRef( 0002000, 0002377, &CProcessor::op_branch<&vm2::alu::condBGE> );
+    RegisterMethodRef( 0002400, 0002777, &CProcessor::op_branch<&vm2::alu::condBLT> );
+    RegisterMethodRef( 0003000, 0003377, &CProcessor::op_branch<&vm2::alu::condBGT> );
+    RegisterMethodRef( 0003400, 0003777, &CProcessor::op_branch<&vm2::alu::condBLE> );
+#endif
+
     RegisterMethodRef( 0004000, 0004777, &CProcessor::ExecuteJSR );  // JSR / CALL
 
+#if PROCESSOR_USE_NEW_ALU == 0
     RegisterMethodRef( 0005000, 0005077, &CProcessor::ExecuteCLR );
     RegisterMethodRef( 0005100, 0005177, &CProcessor::ExecuteCOM );
     RegisterMethodRef( 0005200, 0005277, &CProcessor::ExecuteINC );
@@ -192,25 +122,60 @@ void CProcessor::Init()
     RegisterMethodRef( 0006100, 0006177, &CProcessor::ExecuteROL );
     RegisterMethodRef( 0006200, 0006277, &CProcessor::ExecuteASR );
     RegisterMethodRef( 0006300, 0006377, &CProcessor::ExecuteASL );
+#else
+    RegisterMethodRef( 0005000, 0005077, (&CProcessor::op_alu1<vm2::alu::opCLR, P_WRIDST>));
+    RegisterMethodRef( 0005100, 0005177, (&CProcessor::op_alu1<vm2::alu::opCOM, P_RMWDST>));
+    RegisterMethodRef( 0005200, 0005277, (&CProcessor::op_alu1<vm2::alu::opINC, P_RMWDST>));
+    RegisterMethodRef( 0005300, 0005377, (&CProcessor::op_alu1<vm2::alu::opDEC, P_RMWDST>));
+    RegisterMethodRef( 0005400, 0005477, (&CProcessor::op_alu1<vm2::alu::opNEG, P_RMWDST>));
+    RegisterMethodRef( 0005500, 0005577, (&CProcessor::op_alu1<vm2::alu::opADC, P_RMWDST>));
+    RegisterMethodRef( 0005600, 0005677, (&CProcessor::op_alu1<vm2::alu::opSBC, P_RMWDST>));
+    RegisterMethodRef( 0005700, 0005777, (&CProcessor::op_alu1<vm2::alu::opTST, P_READST>));
+    RegisterMethodRef( 0006000, 0006077, (&CProcessor::op_alu1<vm2::alu::opROR, P_RMWDST>));
+    RegisterMethodRef( 0006100, 0006177, (&CProcessor::op_alu1<vm2::alu::opROL, P_RMWDST>));
+    RegisterMethodRef( 0006200, 0006277, (&CProcessor::op_alu1<vm2::alu::opASR, P_RMWDST>));
+    RegisterMethodRef( 0006300, 0006377, (&CProcessor::op_alu1<vm2::alu::opASL, P_RMWDST>));
+#endif
 
     RegisterMethodRef( 0006400, 0006477, &CProcessor::ExecuteMARK );
-    RegisterMethodRef( 0006700, 0006777, &CProcessor::ExecuteSXT );
 
+#if PROCESSOR_USE_NEW_ALU == 0
+    RegisterMethodRef( 0006700, 0006777, &CProcessor::ExecuteSXT );
+#else
+    RegisterMethodRef( 0006700, 0006777, (&CProcessor::op_alu1<vm2::alu::opSXT, P_WRIDST>));
+#endif
+
+#if PROCESSOR_USE_NEW_ALU == 0
     RegisterMethodRef( 0010000, 0017777, &CProcessor::ExecuteMOV );
     RegisterMethodRef( 0020000, 0027777, &CProcessor::ExecuteCMP );
     RegisterMethodRef( 0030000, 0037777, &CProcessor::ExecuteBIT );
     RegisterMethodRef( 0040000, 0047777, &CProcessor::ExecuteBIC );
     RegisterMethodRef( 0050000, 0057777, &CProcessor::ExecuteBIS );
     RegisterMethodRef( 0060000, 0067777, &CProcessor::ExecuteADD );
+#else
+    RegisterMethodRef( 0010000, 0017777, (&CProcessor::op_alu2<vm2::alu::opMOV, P_REASRC | P_WRIDST>));
+    RegisterMethodRef( 0020000, 0027777, (&CProcessor::op_alu2<vm2::alu::opCMP, P_REASRC | P_READST>));
+    RegisterMethodRef( 0030000, 0037777, (&CProcessor::op_alu2<vm2::alu::opBIT, P_REASRC | P_READST>));
+    RegisterMethodRef( 0040000, 0047777, (&CProcessor::op_alu2<vm2::alu::opBIC, P_REASRC | P_RMWDST>));
+    RegisterMethodRef( 0050000, 0057777, (&CProcessor::op_alu2<vm2::alu::opBIS, P_REASRC | P_RMWDST>));
+    RegisterMethodRef( 0060000, 0067777, (&CProcessor::op_alu2<vm2::alu::opADD, P_REASRC | P_RMWDST>));
+#endif
 
     RegisterMethodRef( 0070000, 0070777, &CProcessor::ExecuteMUL );
     RegisterMethodRef( 0071000, 0071777, &CProcessor::ExecuteDIV );
     RegisterMethodRef( 0072000, 0072777, &CProcessor::ExecuteASH );
     RegisterMethodRef( 0073000, 0073777, &CProcessor::ExecuteASHC );
+
+#if PROCESSOR_USE_NEW_ALU == 0
     RegisterMethodRef( 0074000, 0074777, &CProcessor::ExecuteXOR );
+#else
+    RegisterMethodRef( 0074000, 0074777, (&CProcessor::op_alu2<vm2::alu::opXOR, P_RDSRC | P_RMWDST>) );
+#endif
+
     RegisterMethodRef( 0075000, 0075037, &CProcessor::ExecuteFIS );
     RegisterMethodRef( 0077000, 0077777, &CProcessor::ExecuteSOB );
 
+#if PROCESSOR_USE_NEW_ALU == 0
     RegisterMethodRef( 0100000, 0100377, &CProcessor::ExecuteBPL );
     RegisterMethodRef( 0100400, 0100777, &CProcessor::ExecuteBMI );
     RegisterMethodRef( 0101000, 0101377, &CProcessor::ExecuteBHI );
@@ -219,10 +184,21 @@ void CProcessor::Init()
     RegisterMethodRef( 0102400, 0102777, &CProcessor::ExecuteBVS );
     RegisterMethodRef( 0103000, 0103377, &CProcessor::ExecuteBHIS );  // BCC
     RegisterMethodRef( 0103400, 0103777, &CProcessor::ExecuteBLO );   // BCS
+#else
+    RegisterMethodRef( 0100000, 0100377, &CProcessor::op_branch<&vm2::alu::condBPL >);
+    RegisterMethodRef( 0100400, 0100777, &CProcessor::op_branch<&vm2::alu::condBMI >);
+    RegisterMethodRef( 0101000, 0101377, &CProcessor::op_branch<&vm2::alu::condBHI >);
+    RegisterMethodRef( 0101400, 0101777, &CProcessor::op_branch<&vm2::alu::condBLOS>);
+    RegisterMethodRef( 0102000, 0102377, &CProcessor::op_branch<&vm2::alu::condBVC >);
+    RegisterMethodRef( 0102400, 0102777, &CProcessor::op_branch<&vm2::alu::condBVS >);
+    RegisterMethodRef( 0103000, 0103377, &CProcessor::op_branch<&vm2::alu::condBHIS>);  // BCC
+    RegisterMethodRef( 0103400, 0103777, &CProcessor::op_branch<&vm2::alu::condBLO >);  // BCS
+#endif
 
     RegisterMethodRef( 0104000, 0104377, &CProcessor::ExecuteEMT );
     RegisterMethodRef( 0104400, 0104777, &CProcessor::ExecuteTRAP );
 
+#if PROCESSOR_USE_NEW_ALU == 0
     RegisterMethodRef( 0105000, 0105077, &CProcessor::ExecuteCLRB );
     RegisterMethodRef( 0105100, 0105177, &CProcessor::ExecuteCOMB );
     RegisterMethodRef( 0105200, 0105277, &CProcessor::ExecuteINCB );
@@ -235,16 +211,40 @@ void CProcessor::Init()
     RegisterMethodRef( 0106100, 0106177, &CProcessor::ExecuteROLB );
     RegisterMethodRef( 0106200, 0106277, &CProcessor::ExecuteASRB );
     RegisterMethodRef( 0106300, 0106377, &CProcessor::ExecuteASLB );
+#else
+    RegisterMethodRef( 0105000, 0105077, (&CProcessor::op_alu1<vm2::alu::opCLRB, P_RMWbDST>)); // NOTE: CLRB is RMWb (not Wb)
+    RegisterMethodRef( 0105100, 0105177, (&CProcessor::op_alu1<vm2::alu::opCOMB, P_RMWbDST>));
+    RegisterMethodRef( 0105200, 0105277, (&CProcessor::op_alu1<vm2::alu::opINCB, P_RMWbDST>));
+    RegisterMethodRef( 0105300, 0105377, (&CProcessor::op_alu1<vm2::alu::opDECB, P_RMWbDST>));
+    RegisterMethodRef( 0105400, 0105477, (&CProcessor::op_alu1<vm2::alu::opNEGB, P_RMWbDST>));
+    RegisterMethodRef( 0105500, 0105577, (&CProcessor::op_alu1<vm2::alu::opADCB, P_RMWbDST>));
+    RegisterMethodRef( 0105600, 0105677, (&CProcessor::op_alu1<vm2::alu::opSBCB, P_RMWbDST>));
+    RegisterMethodRef( 0105700, 0105777, (&CProcessor::op_alu1<vm2::alu::opTSTB, P_REAbDST>));
+    RegisterMethodRef( 0106000, 0106077, (&CProcessor::op_alu1<vm2::alu::opRORB, P_RMWbDST>));
+    RegisterMethodRef( 0106100, 0106177, (&CProcessor::op_alu1<vm2::alu::opROLB, P_RMWbDST>));
+    RegisterMethodRef( 0106200, 0106277, (&CProcessor::op_alu1<vm2::alu::opASRB, P_RMWbDST>));
+    RegisterMethodRef( 0106300, 0106377, (&CProcessor::op_alu1<vm2::alu::opASLB, P_RMWbDST>));
+#endif
+
 
     RegisterMethodRef( 0106400, 0106477, &CProcessor::ExecuteMTPS );
     RegisterMethodRef( 0106700, 0106777, &CProcessor::ExecuteMFPS );
 
+#if PROCESSOR_USE_NEW_ALU == 0
     RegisterMethodRef( 0110000, 0117777, &CProcessor::ExecuteMOVB );
     RegisterMethodRef( 0120000, 0127777, &CProcessor::ExecuteCMPB );
     RegisterMethodRef( 0130000, 0137777, &CProcessor::ExecuteBITB );
     RegisterMethodRef( 0140000, 0147777, &CProcessor::ExecuteBICB );
     RegisterMethodRef( 0150000, 0157777, &CProcessor::ExecuteBISB );
     RegisterMethodRef( 0160000, 0167777, &CProcessor::ExecuteSUB );
+#else
+    RegisterMethodRef( 0110000, 0117777, (&CProcessor::op_alu2<vm2::alu::opMOVB, P_REASRC | P_RMWbDST | P_IGBDR>) );
+    RegisterMethodRef( 0120000, 0127777, (&CProcessor::op_alu2<vm2::alu::opCMPB, P_REASRC | P_REAbDST>));
+    RegisterMethodRef( 0130000, 0137777, (&CProcessor::op_alu2<vm2::alu::opBITB, P_REASRC | P_REAbDST>));
+    RegisterMethodRef( 0140000, 0147777, (&CProcessor::op_alu2<vm2::alu::opBICB, P_REASRC | P_RMWbDST>));
+    RegisterMethodRef( 0150000, 0157777, (&CProcessor::op_alu2<vm2::alu::opBISB, P_REASRC | P_RMWbDST>));
+    RegisterMethodRef( 0160000, 0167777, (&CProcessor::op_alu2<vm2::alu::opSUB , P_REASRC | P_RMWDST >));
+#endif
 }
 
 void CProcessor::Done()
@@ -262,7 +262,7 @@ CProcessor::CProcessor (LPCTSTR name)
     m_psw = m_savepsw = 0777;
     m_savepc = 0177777;
     m_okStopped = true;
-    m_internalTick = 0;
+    waitstates_set(0);
     m_pMemoryController = nullptr;
     m_okTrace = false;
     m_waitmode = false;
@@ -279,22 +279,36 @@ CProcessor::CProcessor (LPCTSTR name)
     m_regdest = m_methdest = 0;
     m_addrsrc = m_addrdest = 0;
     memset(m_virq, 0, sizeof(m_virq));
+    memset(m_virq_p, 0, sizeof(m_virq_p));
+
+    m_timing = &cpu_instimes;
+    if (name[0] == _T('P')) {
+        m_timing = &ppu_instimes;
+        ic_.s_ = 12;
+    }
 }
 
 void CProcessor::Execute()
 {
     if (m_okStopped) return;  // Processor is stopped - nothing to do
 
+#if 0
+    m_internalTick--;
     if (m_internalTick > 0)
-    {
-        m_internalTick--;
         return;
-    }
 
     m_internalTick = 0;  //ANYTHING UNKNOWN WILL CAUSE EXCEPTION (EMT)
+#else
+    if (ic_.tick())
+        return;
 
-    if (!InterruptProcessing())
+#endif
+    if (!InterruptProcessing()) {
+        memcpy(m_virq_p, m_virq, sizeof(m_virq));
         CommandExecution();
+    }
+
+//    m_totalticks += m_internalTick;
 }
 
 bool CProcessor::InterruptProcessing ()
@@ -396,17 +410,26 @@ bool CProcessor::InterruptProcessing ()
             intrMode = false;
             for (uint8_t irq = 1; irq <= 15; irq++)
             {
-                if (m_virq[irq] != 0)
+                if (m_virq_p[irq] != 0)
                 {
-                    intrVector = m_virq[irq];
-                    m_VIRQreset = irq;
-                    break;
+                    if (m_virq[irq] != 0) {
+                        intrVector = m_virq[irq];
+                        m_VIRQreset = irq;
+                        break;
+                    }
+                    else {
+                        // TODO: no reply on VIRQ have priority 5
+                        m_virq_p[irq] = 0;
+                        intrMode = true;
+                        intrVector = 0274;
+                    }
                 }
             }
         }
         if (intrVector != 0xFFFF)
         {
-            if (m_internalTick == 0) m_internalTick = EMT_TIMING;  //ANYTHING UNKNOWN WILL CAUSE EXCEPTION (EMT)
+            //if (m_internalTick == 0)
+                waitstates_add(m_timing->SINT);  //ANYTHING UNKNOWN WILL CAUSE EXCEPTION (EMT)
 
             m_waitmode = false;
 
@@ -444,7 +467,10 @@ bool CProcessor::InterruptProcessing ()
                     {
                         if (m_ACLOreset) m_ACLOrq = false;
                         if (m_EVNTreset) m_EVNTrq = false;
-                        if (m_VIRQreset) m_virq[m_VIRQreset] = 0;
+                        if (m_VIRQreset) {
+                            m_virq_p[m_VIRQreset] = 0;
+                            m_virq[m_VIRQreset] = 0;
+                        }
                         new_pc = GetWord(intrVector);
                         new_psw = GetWord(intrVector + 2);
                         if (!m_RPLYrq)
@@ -495,10 +521,13 @@ void CProcessor::SetDCLOPin(bool value)
         m_stepmode = false;
         m_buserror = false;
         m_waitmode = false;
-        m_internalTick = 0;
+        //m_internalTick = 0;
+        waitstates_set(0);
         m_RPLYrq = m_RSVDrq = m_TBITrq = m_ACLOrq = m_HALTrq = m_EVNTrq = false;
         m_ILLGrq = m_FIS_rq = m_BPT_rq = m_IOT_rq = m_EMT_rq = m_TRAPrq = false;
         memset(m_virq, 0, sizeof(m_virq));
+        memset(m_virq_p, 0, sizeof(m_virq_p));
+
         m_ACLOreset = m_EVNTreset = false; m_VIRQreset = 0;
         m_pMemoryController->DCLO_Signal();
         m_pMemoryController->ResetDevices();
@@ -510,7 +539,8 @@ void CProcessor::SetACLOPin(bool value)
     if (m_okStopped && !m_DCLOpin && m_ACLOpin && !value)
     {
         m_okStopped = false;
-        m_internalTick = 0;
+        //m_internalTick = 0;
+        waitstates_set(0);
 
         m_stepmode = false;
         m_waitmode = false;
@@ -518,6 +548,8 @@ void CProcessor::SetACLOPin(bool value)
         m_RPLYrq = m_RSVDrq = m_TBITrq = m_ACLOrq = m_HALTrq = m_EVNTrq = false;
         m_ILLGrq = m_FIS_rq = m_BPT_rq = m_IOT_rq = m_EMT_rq = m_TRAPrq = false;
         memset(m_virq, 0, sizeof(m_virq));
+        memset(m_virq_p, 0, sizeof(m_virq_p));
+
         m_ACLOreset = m_EVNTreset = false; m_VIRQreset = 0;
 
         // "Turn On" interrupt processing
@@ -571,7 +603,20 @@ void CProcessor::FetchInstruction()
     uint16_t pc = GetPC();
     ASSERT((pc & 1) == 0); // it have to be word aligned
 
-    m_instruction = GetWordExec(pc);
+//    m_instruction = GetWordExec(pc);
+    m_instruction = -1;
+    rsp_s rsp = bus_read_raw(pc);
+    if (rsp.is_noreply())
+        m_RPLYrq = true;
+    else {
+        m_instruction = rsp.data();
+        if (rsp.dtime_.as_integer() != 0)
+            ic_.s_ = 12;
+        else
+            ic_.s_ = 10;
+        //fetch_delta_ = rsp.dtime_;
+    }
+
     SetPC(GetPC() + 2);
 }
 
@@ -695,7 +740,7 @@ void CProcessor::ExecuteRCPC()  // ЧКСК - Чтение регистра ко
     else
     {
         SetReg(0, m_savepc);        // R0 <- КРСК
-        m_internalTick = NOP_TIMING;
+        waitstates_add(m_timing->NOP); // TODO: timing
     }
 }
 void CProcessor::ExecuteRCPS()  // ЧКСП - Чтение регистра копии слова состояния процессора
@@ -705,7 +750,7 @@ void CProcessor::ExecuteRCPS()  // ЧКСП - Чтение регистра ко
     else
     {
         SetReg(0, m_savepsw);       // R0 <- КРСП
-        m_internalTick = NOP_TIMING;
+        waitstates_add(m_timing->NOP); // TODO: timing
     }
 }
 void CProcessor::ExecuteWCPC()  // ЗКСК - Запись регистра копии счётчика команд
@@ -715,7 +760,7 @@ void CProcessor::ExecuteWCPC()  // ЗКСК - Запись регистра ко
     else
     {
         m_savepc = GetReg(0);       // КРСК <- R0
-        m_internalTick = NOP_TIMING;
+        waitstates_add(m_timing->NOP); // TODO: timing
     }
 }
 void CProcessor::ExecuteWCPS()  // ЗКСП - Запись регистра копии слова состояния процессора
@@ -725,7 +770,7 @@ void CProcessor::ExecuteWCPS()  // ЗКСП - Запись регистра ко
     else
     {
         m_savepsw = GetReg(0);      // КРСП <- R0
-        m_internalTick = NOP_TIMING;
+        waitstates_add(m_timing->NOP); // TODO: timing
     }
 }
 
@@ -745,7 +790,7 @@ void CProcessor::ExecuteMFUS ()  // ЧЧП, move from user space - Чтение 
     SetReg(5, addr + 2);
     if (!m_RPLYrq)  SetReg(0, word);
 
-    m_internalTick = MOV_TIMING[0][2];
+    waitstates_add(m_timing->R_W[2][0]); // TODO: timing
 }
 
 void CProcessor::ExecuteMTUS()  // ЗЧП, move to user space - Запись в память адресного пространства USER
@@ -762,7 +807,7 @@ void CProcessor::ExecuteMTUS()  // ЗЧП, move to user space - Запись в 
     SetWord(GetReg(5), GetReg(0));  // Write in USER mode
     SetHALT(true);
 
-    m_internalTick = MOV_TIMING[0][2];
+    waitstates_add(m_timing->R_W[0][4]); // TODO: timing
 }
 
 void CProcessor::ExecuteRTI()  // RTI - Return from Interrupt - Возврат из прерывания
@@ -779,7 +824,7 @@ void CProcessor::ExecuteRTI()  // RTI - Return from Interrupt - Возврат �
         SetLPSW((uint8_t)(word & 0xff));
     else
         SetPSW(word); //load new mode
-    m_internalTick = RTI_TIMING;
+    waitstates_add(m_timing->RTx);
 }
 
 void CProcessor::ExecuteRTT ()  // RTT - Return from Trace Trap -- Возврат из прерывания
@@ -799,19 +844,19 @@ void CProcessor::ExecuteRTT ()  // RTT - Return from Trace Trap -- Возвра�
 
     m_stepmode = (word & PSW_T) ? true : false;
 
-    m_internalTick = RTI_TIMING;
+    waitstates_add(m_timing->RTx);
 }
 
 void CProcessor::ExecuteBPT ()  // BPT - Breakpoint
 {
     m_BPT_rq = true;
-    m_internalTick = BPT_TIMING;
+//    waitstates_add(m_timing->SINT);
 }
 
 void CProcessor::ExecuteIOT ()  // IOT - I/O trap
 {
     m_IOT_rq = true;
-    m_internalTick = EMT_TIMING;
+//    waitstates_add(m_timing->SINT);
 }
 
 void CProcessor::ExecuteRESET ()  // Reset input/output devices -- Сброс внешних устройств
@@ -819,7 +864,7 @@ void CProcessor::ExecuteRESET ()  // Reset input/output devices -- Сброс в
     m_EVNTrq = false;
     m_pMemoryController->ResetDevices();  // INIT signal
 
-    m_internalTick = RESET_TIMING;
+    waitstates_add(m_timing->RESET);
 }
 
 void CProcessor::ExecuteRTS ()  // RTS - return from subroutine - Возврат из процедуры
@@ -830,37 +875,835 @@ void CProcessor::ExecuteRTS ()  // RTS - return from subroutine - Возврат
     SetSP(GetSP() + 2);
     if (m_RPLYrq) return;
     SetReg(m_regdest, word);
-    m_internalTick = RTS_TIMING;
+
+    waitstates_add(m_timing->RTS);
 }
 
 void CProcessor::ExecuteCCC ()
 {
     SetLPSW(GetLPSW() &  ~((uint8_t)(m_instruction & 0xff) & 017));
-    m_internalTick = NOP_TIMING;
+    waitstates_add(m_timing->NOP);
 }
 void CProcessor::ExecuteSCC ()
 {
     SetLPSW(GetLPSW() |  ((uint8_t)(m_instruction & 0xff) & 017));
-    m_internalTick = NOP_TIMING;
+    waitstates_add(m_timing->NOP);
 }
 
+constexpr instime_t VM2_RPLY_TIMEOUT  { 120.0 };
+
+#if 0
 void CProcessor::ExecuteJMP ()  // JMP - jump: PC = &d (a-mode > 0)
 {
     if (m_methdest == 0)  // Неправильный метод адресации
     {
         m_ILLGrq = true;
-        m_internalTick = EMT_TIMING;
+        //waitstates_add(m_timing->SINT);
     }
     else
     {
         uint16_t word;
         word = GetWordAddr(m_methdest, m_regdest);
-        if (m_RPLYrq) return;
+        if (m_RPLYrq)
+            return;
+
         SetPC(word);
-        m_internalTick = JMP_TIMING[m_methdest - 1];
+
+        waitstates_add(m_timing->JMP[m_methdest]);
+    }
+}
+#else
+void CProcessor::ExecuteJMP()
+{
+    constexpr unsigned int flags = P_EADST | P_NOPSW;
+    x_estate_s estate;
+    op_exec_prepare<flags>(estate);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
+
+    if (estate.dst.ea.is_reg()) {
+        m_ILLGrq = true;
+        return;
+    }
+
+    SetPC(estate.dst.ea.addr());
+
+    op_exec_finalize<flags>(estate);
+
+    const unsigned int md = (flags & P_EADST) ? m_methdest : 0;
+    instime_t it = m_timing->JMP[md];
+    it -= estate.delta;
+    waitstates_add(it);
+}
+#endif
+//////////////////////////////////////////////////////////////////////////////////
+#if 1
+
+template<bool byte>
+CProcessor::ea_s CProcessor::op_calculate_ea(x_estate_s& estate, unsigned int m77)
+{
+    unsigned int reg = m77 & 007;
+    unsigned int adm = m77 & 060;
+    unsigned int ref = m77 & 010;
+
+    // delta is 1 only if BYTE & rN not SP|PC & it not deref mode
+    const unsigned int delta = 2 - (byte && (reg < 6) && (ref == 0));
+
+    ea_s ea{ ea_s::reg_index{reg} };
+    switch (adm) {
+
+    case 020:
+        {
+            unsigned int ro = GetReg(reg);
+            ea = ea_s{ ea_s::mem_addr{ro} };
+            ro += delta;
+            SetReg(reg, ro);
+        }
+        break;
+
+    case 040:
+        {
+            unsigned int ro = GetReg(reg);
+            ro -= delta;
+            ea = ea_s{ ea_s::mem_addr{ro} };
+            SetReg(reg, ro);
+        }
+        break;
+
+    case 060:
+        {
+            unsigned int pc = GetReg(7);
+            SetReg(7, pc + 2);
+            unsigned int ro = GetReg(reg);
+
+            unsigned int ba = -1;
+            rsp_s rsp = bus_read_raw(pc);
+            if (rsp.is_noreply())
+                m_RPLYrq = true;
+            else {
+                ba = rsp.data();
+                estate.delta += rsp.dtime_;
+            }
+
+            ea = ea_s { ea_s::mem_addr { ba + ro } };
+        }
+        break;
+    }
+
+    if (ref && !m_RPLYrq) {
+        unsigned int deref;
+        if (ea.is_mem()) {
+            //deref = bus_read(ea.addr());
+            rsp_s rsp = bus_read_raw(ea.addr());
+            if (rsp.is_noreply())
+                m_RPLYrq = true;
+            else {
+                deref = rsp.data();
+                estate.delta += rsp.dtime_;
+            }
+        }
+        else
+            deref = GetReg(ea.reg());
+
+        ea = ea_s { ea_s::mem_addr{deref} };
+    }
+
+    return ea;
+}
+
+template<bool byte, CProcessor::rmw_e t>
+void CProcessor::op_exec_fetch_field(x_estate_s& estate, x_op_arg_s& field)
+{
+    const auto& ea = field.ea;
+    unsigned int u16;
+
+    if (ea.is_mem()) {
+        rsp_s rsp = bus_read_raw(ea.addr(), t);
+        if (rsp.is_noreply())
+            m_RPLYrq = true;
+        else {
+            u16 = rsp.data();
+            estate.delta += rsp.dtime_;
+        }
+    }
+    else
+        u16 = GetReg(ea.reg());
+
+    if (m_RPLYrq)
+        return;
+
+    field.u16 = u16;
+
+    unsigned int alu_u16 = u16;
+    if constexpr (byte) {
+        if (ea.is_mem() && (ea.addr() & 1))
+            alu_u16 >>= 8;
+
+        alu_u16 &= 0x00FF;
+    }
+
+    field.alu_u16 = alu_u16;
+}
+
+template<unsigned int flags>
+void CProcessor::op_exec_fetch_src(x_estate_s& estate)
+{
+    unsigned int opcode = m_instruction;
+
+    constexpr bool byte = (flags & P_BYTE);
+
+    constexpr unsigned int m70bm = (flags & P_EASRC) ? 077 : 000;
+    constexpr unsigned int m07bm = (flags & P_RDSRC) ? 007 : 000;
+    constexpr unsigned int m77bm = m70bm | m07bm;
+    if constexpr (m77bm) {
+        unsigned int m77 = (opcode >> 6);
+        estate.src.ea = op_calculate_ea<byte>(estate, m77 & m77bm);
+        if (m_RPLYrq)
+            return;
+
+        if constexpr (m07bm) {
+            op_exec_fetch_field<byte, rmw_e::single>(estate, estate.src);
+            if (m_RPLYrq)
+                return;
+
+            if constexpr (flags & P_RDSRCPR) {
+                const unsigned int rb = estate.src.ea.reg();
+                const unsigned int rp = rb | 1;
+                const unsigned int rp_u16 = GetReg(rp);
+                estate.src.alu_u16 <<= 16;
+                estate.src.alu_u16 |=  rp_u16;
+            }
+        }
     }
 }
 
+template<unsigned int flags>
+void CProcessor::op_exec_fetch_dst(x_estate_s& estate)
+{
+    unsigned int opcode = m_instruction;
+
+    constexpr bool byte = (flags & P_BYTE);
+
+    constexpr unsigned int m70bm = (flags & P_EADST) ? 077 : 000;
+    constexpr unsigned int m07bm = (flags & (P_RDDST | P_WRDST)) ? 007 : 000;
+    constexpr unsigned int m77bm = m70bm | m07bm;
+    if constexpr (m77bm) {
+        unsigned int m77 = (opcode >> 0);
+        estate.dst.ea = op_calculate_ea<byte>(estate, m77 & m77bm);
+        if (m_RPLYrq)
+            return;
+
+        if constexpr (flags & P_RDDST) {
+            constexpr rmw_e t = ((flags & (P_RDDST | P_WRDST)) == (P_RDDST | P_WRDST)) ? rmw_e::rmw : rmw_e::single;
+            op_exec_fetch_field<byte, t>(estate, estate.dst);
+            if (m_RPLYrq)
+                return;
+        }
+    }
+}
+
+
+template<unsigned int flags>
+void CProcessor::op_exec_prepare(x_estate_s& estate)
+{
+#if 0
+    unsigned int opcode = m_instruction;
+
+    constexpr bool byte = (flags & P_BYTE);
+
+    if constexpr (true)
+    {
+        constexpr unsigned int m70bm = (flags & P_EASRC) ? 077 : 000;
+        constexpr unsigned int m07bm = (flags & P_RDSRC) ? 007 : 000;
+        constexpr unsigned int m77bm = m70bm | m07bm;
+        if constexpr (m77bm) {
+            unsigned int m77 = (opcode >> 6);
+            estate.src.ea = op_calculate_ea<byte>(estate, m77 & m77bm);
+            if (m_RPLYrq)
+                return;
+
+            if constexpr (m07bm) {
+                op_exec_fetch_field<byte, rmw_e::single>(estate, estate.src);
+                if (m_RPLYrq)
+                    return;
+
+                if constexpr (flags & P_RDSRCPR) {
+                    const unsigned int rb = estate.src.ea.reg();
+                    const unsigned int rp = rb | 1;
+                    const unsigned int rp_u16 = GetReg(rp);
+                    estate.src.alu_u16 <<= 16;
+                    estate.src.alu_u16 |=  rp_u16;
+                }
+            }
+        }
+    }
+
+    if constexpr (true) {
+        constexpr unsigned int m70bm = (flags & P_EADST) ? 077 : 000;
+        constexpr unsigned int m07bm = (flags & (P_RDDST | P_WRDST)) ? 007 : 000;
+        constexpr unsigned int m77bm = m70bm | m07bm;
+        if constexpr (m77bm) {
+            unsigned int m77 = (opcode >> 0);
+            estate.dst.ea = op_calculate_ea<byte>(estate, m77 & m77bm);
+            if (m_RPLYrq)
+                return;
+
+            if constexpr (flags & P_RDDST) {
+                constexpr rmw_e t = ((flags & (P_RDDST | P_WRDST)) == (P_RDDST | P_WRDST)) ? rmw_e::rmw : rmw_e::single;
+                op_exec_fetch_field<byte, t>(estate, estate.dst);
+                if (m_RPLYrq)
+                    return;
+            }
+        }
+
+    }
+#endif
+
+    if constexpr (flags & P_AFINV) { // EIS only
+        op_exec_fetch_dst<flags>(estate); // DST first
+        op_exec_fetch_src<flags>(estate); // SRC second
+    }
+    else {
+        op_exec_fetch_src<flags>(estate); // SRC first
+        op_exec_fetch_dst<flags>(estate); // DST second
+    }
+    estate.psw = GetLPSW();
+}
+
+template<unsigned int flags>
+void CProcessor::op_exec_finalize(x_estate_s& estate)
+{
+
+//    if constexpr (flags & P_WRSRC) {
+//        static_assert((flags & P_EASRC) == 0); // write SRC only for registers and its' pairs
+//        static_assert((flags & P_WRDST) == 0); // have not to be write DST if SRC is written
+//
+//        const unsigned int rb = estate.src.ea.reg();
+//        const unsigned int res = estate.res;
+//        SetReg(rb, res & 0xFFFF);
+//
+//        if constexpr (flags & P_WRSRCPR) {
+//            const unsigned int rp = rb | 1;
+//            SetReg(rp, res >> 16);
+//        }
+//    }
+//    else
+    if constexpr (flags & P_WRDST) {
+        constexpr bool byte = (flags & P_BYTE);
+
+        const ea_s ea = estate.dst.ea;
+        unsigned int res = estate.res;
+
+        if (ea.is_mem()) {
+            unsigned int a16 = ea.addr();
+
+            if constexpr (byte) {
+                unsigned int du16 = estate.dst.u16;
+                if (a16 & 1)
+                    res = ((res << 8) & 0xFF00) | (du16 & 0x00FF);
+                else
+                    res = ((res << 0) & 0x00FF) | (du16 & 0xFF00);
+            }
+
+            constexpr rmw_e t = ((flags & P_RMWDST) == P_RMWDST) ? rmw_e::rmw : rmw_e::single;
+
+            rsp_s rsp = bus_write_raw(a16, res, byte, t);
+            if (rsp.is_noreply())
+                m_RPLYrq = true;
+            else {
+                estate.delta += rsp.dtime_;
+            }
+        }
+        else {
+            unsigned int ri = ea.reg();
+
+            constexpr bool igbdr = (flags & P_IGBDR);
+
+            if (byte & !igbdr)
+                SetLReg(ri, res);
+            else
+                SetReg(ri, res);
+        }
+    }
+
+    if (m_RPLYrq)
+        return;
+
+    if constexpr ( (flags & P_NOPSW) == 0 ) {
+        SetLPSW(estate.psw);
+    }
+}
+
+#endif
+
+
+#if 0
+
+#define PROCESSOR_USE_ONLY_WORD_IO 1
+
+#if PROCESSOR_USE_ONLY_WORD_IO
+template<unsigned int flags>
+void CProcessor::op_exec_read(estate_s& args)
+{
+    if (flags & P_EASRC) {
+        if (m_methsrc) {
+            if (flags & P_BYTE)
+                args.src.ea = GetByteAddr(m_methsrc, m_regsrc);
+            else
+                args.src.ea = GetWordAddr(m_methsrc, m_regsrc);
+            if (m_RPLYrq)
+                return;
+        }
+    }
+#if 0
+    if constexpr (flags & P_RDSRC) {
+        if ((flags & P_EASRC) && m_methsrc) {
+            args.src.u16 = GetWord(args.src.ea);
+            if (m_RPLYrq)
+                return;
+
+            if (flags & P_BYTE) {
+                if (args.src.ea & 1)
+                    args.src.u16 >>= 8;
+
+                args.src.u16 &= 0x00FF;
+            }
+        }
+        else {
+            if (flags & P_BYTE)
+                args.src.u16 = GetLReg(m_regsrc);
+            else
+                args.src.u16 = GetReg(m_regsrc);
+        }
+    }
+#else
+    if (flags & P_RDSRC) {
+        if ((flags & P_EASRC) && m_methsrc)
+#if BUS_USE_NEW_IO
+            args.src.u16 = bus_read(args.src.ea);
+#else
+            args.src.u16 = GetWord(args.src.ea);
+#endif
+        else
+            args.src.u16 = GetReg(m_regsrc);
+        if (m_RPLYrq)
+            return;
+
+        args.alu_src = args.src.u16;
+
+        if (flags & P_BYTE) {
+
+            if ((flags & P_EASRC) && m_methsrc) {
+                if (args.src.ea & 1)
+                    args.alu_src >>= 8;
+            }
+
+            args.alu_src &= 0x00FF;
+        }
+    }
+#endif
+
+    if (flags & P_EADST) {
+        if (m_methdest) {
+            if (flags & P_BYTE)
+                args.dst.ea = GetByteAddr(m_methdest, m_regdest);
+            else
+                args.dst.ea = GetWordAddr(m_methdest, m_regdest);
+            if (m_RPLYrq)
+                return;
+        }
+    }
+
+#if 0
+    if (flags & P_RDDST) {
+        static_assert(flags & P_EADST);
+
+        if ((flags & P_EADST) && m_methdest) {
+            args.dst.u16 = GetWord(args.dst.ea);
+            if (m_RPLYrq)
+                return;
+        }
+        else {
+            if (flags & P_BYTE)
+                args.dst.u16 = GetLReg(m_regdest);
+            else
+                args.dst.u16 = GetReg(m_regdest);
+        }
+    }
+#else
+    if (flags & P_RDDST) {
+        if ((flags & P_EADST) && m_methdest)
+#if BUS_USE_NEW_IO
+            args.dst.u16 = bus_read(args.dst.ea);
+#else
+            args.dst.u16 = GetWord(args.dst.ea);
+#endif
+        else
+            args.dst.u16 = GetReg(m_regdest);
+        if (m_RPLYrq)
+            return;
+
+        args.alu_dst = args.dst.u16;
+
+        if (flags & P_BYTE) {
+
+            if ((flags & P_EADST) && m_methdest) {
+                if (args.dst.ea & 1)
+                    args.alu_dst >>= 8;
+            }
+
+            args.alu_dst &= 0x00FF;
+        }
+    }
+#endif
+}
+
+template<unsigned int flags>
+void CProcessor::op_exec_writeback(const op_arg_s& arg, unsigned int res)
+{
+    if (flags & P_WRDST) {
+        if ((flags & P_EADST) && m_methdest) {
+//            if (flags & P_BYTE)
+//                SetByte(arg.ea, res);
+//            else
+//                SetWord(arg.ea, res);
+            if (flags & P_BYTE) {
+                if (arg.ea & 1)
+                    res = ((res << 8) & 0xFF00) | (arg.u16 & 0x00FF);
+                else
+                    res = ((res << 0) & 0x00FF) | (arg.u16 & 0xFF00);
+            }
+#if BUS_USE_NEW_IO
+            bus_write(arg.ea, res, (flags & P_BYTE));
+#else
+            SetWord(arg.ea, res);
+#endif
+            if (m_RPLYrq)
+                return;
+        }
+        else {
+            if (flags & P_BYTE) {
+                if (flags & P_SXBDR) {
+                    //unsigned int sxu16 = ((res ^ 0x80) - 0x80);
+                    SetReg(m_regdest, res);
+                }
+                else
+                    SetLReg(m_regdest, res);
+            }
+            else
+                SetReg(m_regdest, res);
+        }
+    }
+}
+#else
+template<unsigned int flags>
+void CProcessor::op_read_args(op_args_s& args)
+{
+    if (flags & P_EASRC) {
+        if (m_methsrc) {
+            if (flags & P_BYTE)
+                args.src.ea = GetByteAddr(m_methsrc, m_regsrc);
+            else
+                args.src.ea = GetWordAddr(m_methsrc, m_regsrc);
+            if (m_RPLYrq) return;
+        }
+    }
+
+    if constexpr (flags & P_RDSRC) {
+        if ((flags & P_EASRC) && m_methsrc) {
+            if (flags & P_BYTE)
+                args.src.u16 = GetByte(args.src.ea);
+            else
+                args.src.u16 = GetWord(args.src.ea);
+            if (m_RPLYrq) return;
+        }
+        else {
+            if (flags & P_BYTE)
+                args.src.u16 = GetLReg(m_regsrc);
+            else
+                args.src.u16 = GetReg(m_regsrc);
+        }
+    }
+
+    if (flags & P_EADST) {
+        if (m_methdest) {
+            if (flags & P_BYTE)
+                args.dst.ea = GetByteAddr(m_methdest, m_regdest);
+            else
+                args.dst.ea = GetWordAddr(m_methdest, m_regdest);
+            if (m_RPLYrq) return;
+        }
+    }
+
+    if (flags & P_RDDST) {
+        static_assert(flags & P_EADST);
+
+        if (m_methdest) {
+            if (flags & P_BYTE)
+                args.dst.u16 = GetByte(args.dst.ea);
+            else
+                args.dst.u16 = GetWord(args.dst.ea);
+            if (m_RPLYrq) return;
+        }
+        else {
+            if (flags & P_BYTE)
+                args.dst.u16 = GetLReg(m_regdest);
+            else
+                args.dst.u16 = GetReg(m_regdest);
+        }
+    }
+}
+
+template<unsigned int flags>
+void CProcessor::op_writeback(const op_arg_s& arg)
+{
+    if (flags & P_WRDST) {
+        static_assert(flags & P_EADST);
+
+        if (m_methdest) {
+            if (flags & P_BYTE)
+                SetByte(arg.ea, arg.u16);
+            else
+                SetWord(arg.ea, arg.u16);
+            if (m_RPLYrq) return;
+        }
+        else {
+            if (flags & P_BYTE) {
+                if (flags & P_SXBDR) {
+                    unsigned int sxu16 = ((arg.u16 ^ 0x80) - 0x80);
+                    SetReg(m_regdest, sxu16);
+                }
+                else
+                    SetLReg(m_regdest, arg.u16);
+            }
+            else
+                SetReg(m_regdest, arg.u16);
+        }
+    }
+}
+#endif
+#endif
+
+#if 0
+template<vm2::alu::alu1_fn fn, unsigned int flags>
+void CProcessor::op_alu1()
+{
+    uint8_t  psw = GetLPSW();
+
+    estate_s args;
+    op_exec_read<flags>(args);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
+
+#if PROCESSOR_USE_ONLY_WORD_IO == 1
+
+    vm2::alu::alu1_s r = fn({psw, args.alu_dst});
+
+    op_exec_writeback<flags>(args.dst, r.dst);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
+#else
+    vm2::alu::alu1_s r = fn({psw, args.dst.u16});
+
+    args.dst.u16 = r.dst;
+
+    op_writeback<flags>(args.dst);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
+#endif
+    const unsigned int md = (flags & P_EADST) ? m_methdest : 0;
+
+    SetLPSW(r.psw);
+    switch(flags & (P_RDDST | P_WRDST))
+    {
+    case P_RDDST:
+        waitstates_add(m_timing->R[md]);
+        break;
+    case P_WRDST:
+        if (flags & P_BYTE)
+            waitstates_add(m_timing->Wb[md]);
+        else
+            waitstates_add(m_timing->W[md]);
+        break;
+    case P_RDDST | P_WRDST:
+        if (flags & P_BYTE)
+            waitstates_add(m_timing->RMWb[md]);
+        else
+            waitstates_add(m_timing->RMW[md]);
+        break;
+    }
+}
+#else
+template<vm2::alu::alu1_fn fn, unsigned int flags>
+void CProcessor::op_alu1()
+{
+    x_estate_s estate;
+    op_exec_prepare<flags>(estate);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
+
+    vm2::alu::alu1_s r = fn({estate.psw, estate.dst.alu_u16});
+
+    estate.psw = r.psw;
+    estate.res = r.dst;
+
+    op_exec_finalize<flags>(estate);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
+
+    const unsigned int md = (flags & P_EADST) ? m_methdest : 0;
+    instime_t it;
+    switch(flags & (P_RDDST | P_WRDST))
+    {
+    case P_RDDST:
+        it = m_timing->R[md];
+        break;
+    case P_WRDST:
+        if (flags & P_BYTE)
+            it = m_timing->Wb[md];
+        else
+            it = m_timing->W[md];
+        break;
+    case P_RDDST | P_WRDST:
+        if (flags & P_BYTE)
+            it = m_timing->RMWb[md];
+        else
+            it = m_timing->RMW[md];
+        break;
+    }
+
+    it -= estate.delta;
+
+//    if (fetch_delta_.as_integer() != 0) {
+//        it -= instime_t{ 2.0 };
+//        assert( it.as_integer() > 0 );
+//    }
+
+    waitstates_add(it);
+}
+
+#endif
+
+#if 0
+template<vm2::alu::alu2_fn fn, unsigned int flags>
+void CProcessor::op_alu2()
+{
+    uint8_t  psw = GetLPSW();
+
+    estate_s args;
+    op_exec_read<flags>(args);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
+#if PROCESSOR_USE_ONLY_WORD_IO == 1
+
+    vm2::alu::alu1_s r = fn({ psw, args.alu_src, args.alu_dst });
+
+    op_exec_writeback<flags>(args.dst, r.dst);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
+
+#else
+    vm2::alu::alu1_s r = fn({ psw, args.src.u16, args.dst.u16 });
+
+    args.dst.u16 = r.dst;
+
+    op_writeback<flags>(args.dst);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
+#endif
+    const unsigned int ms = (flags & P_EASRC) ? m_methsrc  : 0;
+    const unsigned int md = (flags & P_EADST) ? m_methdest : 0;
+    SetLPSW(r.psw);
+    switch(flags & (P_RDDST | P_WRDST))
+    {
+    case P_RDDST:
+        waitstates_add(m_timing->R_R[ms][md]);
+        break;
+    case P_WRDST:
+        if (flags & P_BYTE)
+            waitstates_add(m_timing->R_Wb[ms][md]);
+        else
+            waitstates_add(m_timing->R_W[ms][md]);
+        break;
+    case P_RDDST | P_WRDST:
+        if (flags & P_BYTE)
+            waitstates_add(m_timing->R_RMWb[ms][md]);
+        else
+            waitstates_add(m_timing->R_RMW[ms][md]);
+        break;
+    }
+}
+#else
+template<vm2::alu::alu2_fn fn, unsigned int flags>
+void CProcessor::op_alu2()
+{
+    x_estate_s estate;
+    op_exec_prepare<flags>(estate);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
+
+    vm2::alu::alu1_s r = fn({estate.psw, estate.src.alu_u16, estate.dst.alu_u16});
+
+    estate.psw = r.psw;
+    estate.res = r.dst;
+
+    op_exec_finalize<flags>(estate);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
+
+    const unsigned int ms = (flags & P_EASRC) ? m_methsrc  : 0;
+    const unsigned int md = (flags & P_EADST) ? m_methdest : 0;
+    instime_t it;
+
+    switch(flags & (P_RDDST | P_WRDST))
+    {
+    case P_RDDST:
+        it = m_timing->R_R[ms][md];
+        break;
+    case P_WRDST:
+        if (flags & P_BYTE)
+            it = m_timing->R_Wb[ms][md];
+        else
+            it = m_timing->R_W[ms][md];
+        break;
+    case P_RDDST | P_WRDST:
+        if (flags & P_BYTE)
+            it = m_timing->R_RMWb[ms][md];
+        else
+            it = m_timing->R_RMW[ms][md];
+        break;
+    }
+
+    it -= estate.delta;
+
+    waitstates_add(it);
+}
+#endif
+
+
+#if PROCESSOR_USE_NEW_ALU == 0
 void CProcessor::ExecuteSWAB ()
 {
     uint16_t ea = 0;
@@ -889,7 +1732,7 @@ void CProcessor::ExecuteSWAB ()
     if ((dst & 0200) != 0) new_psw |= PSW_N;
     if ((uint8_t)(dst & 0xff) == 0) new_psw |= PSW_Z;
     SetLPSW(new_psw);
-    m_internalTick = MOV_TIMING[m_methdest][m_methdest];
+    waitstates_add(m_timing->RMW[m_methdest]);
 }
 
 void CProcessor::ExecuteCLR ()  // CLR
@@ -907,7 +1750,7 @@ void CProcessor::ExecuteCLR ()  // CLR
         SetReg(m_regdest, 0);
 
     SetLPSW((GetLPSW() & 0xF0) | PSW_Z);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->W[m_methdest]);
 }
 
 void CProcessor::ExecuteCLRB ()  // CLRB
@@ -927,7 +1770,7 @@ void CProcessor::ExecuteCLRB ()  // CLRB
         SetLReg(m_regdest, 0);
 
     SetLPSW((GetLPSW() & 0xF0) | PSW_Z);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->Wb[m_methdest]);
 }
 
 void CProcessor::ExecuteCOM()  // COM
@@ -958,8 +1801,9 @@ void CProcessor::ExecuteCOM()  // COM
     if (dst == 0) new_psw |= PSW_Z;
     new_psw |= PSW_C;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMW[m_methdest]);
 }
+
 void CProcessor::ExecuteCOMB()  // COM
 {
     uint16_t ea = 0;
@@ -988,7 +1832,7 @@ void CProcessor::ExecuteCOMB()  // COM
     if (dst == 0) new_psw |= PSW_Z;
     new_psw |= PSW_C;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMWb[m_methdest]);
 }
 
 void CProcessor::ExecuteINC()  // INC - Инкремент
@@ -1019,7 +1863,7 @@ void CProcessor::ExecuteINC()  // INC - Инкремент
     if (dst == 0) new_psw |= PSW_Z;
     if (dst == 0100000) new_psw |= PSW_V;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMW[m_methdest]);
 }
 void CProcessor::ExecuteINCB()  // INCB - Инкремент
 {
@@ -1049,7 +1893,7 @@ void CProcessor::ExecuteINCB()  // INCB - Инкремент
     if (dst == 0) new_psw |= PSW_Z;
     if (dst == 0200) new_psw |= PSW_V;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMWb[m_methdest]);
 }
 
 void CProcessor::ExecuteDEC()  // DEC - Декремент
@@ -1080,7 +1924,7 @@ void CProcessor::ExecuteDEC()  // DEC - Декремент
     if (dst == 0) new_psw |= PSW_Z;
     if (dst == 077777) new_psw |= PSW_V;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMW[m_methdest]);
 }
 
 void CProcessor::ExecuteDECB ()  // DECB - Декремент
@@ -1111,7 +1955,7 @@ void CProcessor::ExecuteDECB ()  // DECB - Декремент
     if (dst == 0) new_psw |= PSW_Z;
     if (dst == 0177) new_psw |= PSW_V;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMWb[m_methdest]);
 }
 
 void CProcessor::ExecuteNEG()
@@ -1143,7 +1987,7 @@ void CProcessor::ExecuteNEG()
     if (dst == 0100000) new_psw |= PSW_V;
     if (dst != 0) new_psw |= PSW_C;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMW[m_methdest]);
 }
 
 void CProcessor::ExecuteNEGB ()
@@ -1175,7 +2019,7 @@ void CProcessor::ExecuteNEGB ()
     if (dst == 0200) new_psw |= PSW_V;
     if (dst != 0) new_psw |= PSW_C;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMWb[m_methdest]);
 }
 
 void CProcessor::ExecuteADC()
@@ -1207,7 +2051,7 @@ void CProcessor::ExecuteADC()
     if ((dst == 0100000) && GetC()) new_psw |= PSW_V;
     if ((dst == 0) && GetC()) new_psw |= PSW_C;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMW[m_methdest]);
 }
 
 void CProcessor::ExecuteADCB()  // ADCB
@@ -1239,7 +2083,7 @@ void CProcessor::ExecuteADCB()  // ADCB
     if ((dst == 0200) && GetC()) new_psw |= PSW_V;
     if ((dst == 0) && GetC()) new_psw |= PSW_C;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMWb[m_methdest]);
 }
 
 void CProcessor::ExecuteSBC()
@@ -1271,7 +2115,7 @@ void CProcessor::ExecuteSBC()
     if ((dst == 077777) && GetC()) new_psw |= PSW_V;
     if ((dst == 0177777) && GetC()) new_psw |= PSW_C;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMW[m_methdest]);
 }
 
 void CProcessor::ExecuteSBCB()
@@ -1303,7 +2147,7 @@ void CProcessor::ExecuteSBCB()
     if ((dst == 0177) && GetC()) new_psw |= PSW_V;
     if ((dst == 0377) && GetC()) new_psw |= PSW_C;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMWb[m_methdest]);
 }
 
 void CProcessor::ExecuteTST()  // TST
@@ -1324,7 +2168,7 @@ void CProcessor::ExecuteTST()  // TST
     if (dst & 0100000) new_psw |= PSW_N;
     if (dst == 0) new_psw |= PSW_Z;
     SetLPSW(new_psw);
-    m_internalTick = TST_TIMING[m_methdest];
+    waitstates_add(m_timing->R[m_methdest]);
 }
 
 void CProcessor::ExecuteTSTB()  // TSTB
@@ -1345,7 +2189,7 @@ void CProcessor::ExecuteTSTB()  // TSTB
     if (dst & 0200) new_psw |= PSW_N;
     if (dst == 0) new_psw |= PSW_Z;
     SetLPSW(new_psw);
-    m_internalTick = TST_TIMING[m_methdest];
+    waitstates_add(m_timing->R[m_methdest]);
 }
 
 void CProcessor::ExecuteROR()  // ROR
@@ -1377,7 +2221,7 @@ void CProcessor::ExecuteROR()  // ROR
     if (src & 1) new_psw |= PSW_C;
     if (((new_psw & PSW_N) != 0) != ((new_psw & PSW_C) != 0)) new_psw |= PSW_V;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMW[m_methdest]);
 }
 
 void CProcessor::ExecuteRORB()  // RORB
@@ -1409,7 +2253,7 @@ void CProcessor::ExecuteRORB()  // RORB
     if (src & 1) new_psw |= PSW_C;
     if (((new_psw & PSW_N) != 0) != ((new_psw & PSW_C) != 0)) new_psw |= PSW_V;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMWb[m_methdest]);
 }
 
 void CProcessor::ExecuteROL()  // ROL
@@ -1441,7 +2285,7 @@ void CProcessor::ExecuteROL()  // ROL
     if (src & 0100000) new_psw |= PSW_C;
     if (((new_psw & PSW_N) != 0) != ((new_psw & PSW_C) != 0)) new_psw |= PSW_V;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMW[m_methdest]);
 }
 
 void CProcessor::ExecuteROLB()  // ROLB
@@ -1473,7 +2317,7 @@ void CProcessor::ExecuteROLB()  // ROLB
     if (src & 0200) new_psw |= PSW_C;
     if (((new_psw & PSW_N) != 0) != ((new_psw & PSW_C) != 0)) new_psw |= PSW_V;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMWb[m_methdest]);
 }
 
 void CProcessor::ExecuteASR()  // ASR
@@ -1505,7 +2349,7 @@ void CProcessor::ExecuteASR()  // ASR
     if (src & 1) new_psw |= PSW_C;
     if (((new_psw & PSW_N) != 0) != ((new_psw & PSW_C) != 0)) new_psw |= PSW_V;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMW[m_methdest]);
 }
 
 void CProcessor::ExecuteASRB()  // ASRB
@@ -1537,7 +2381,7 @@ void CProcessor::ExecuteASRB()  // ASRB
     if (src & 1) new_psw |= PSW_C;
     if (((new_psw & PSW_N) != 0) != ((new_psw & PSW_C) != 0)) new_psw |= PSW_V;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMWb[m_methdest]);
 }
 
 void CProcessor::ExecuteASL()  // ASL
@@ -1569,7 +2413,7 @@ void CProcessor::ExecuteASL()  // ASL
     if (src & 0100000) new_psw |= PSW_C;
     if (((new_psw & PSW_N) != 0) != ((new_psw & PSW_C) != 0)) new_psw |= PSW_V;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMW[m_methdest]);
 }
 
 void CProcessor::ExecuteASLB()  // ASLB
@@ -1601,7 +2445,7 @@ void CProcessor::ExecuteASLB()  // ASLB
     if (src & 0200) new_psw |= PSW_C;
     if (((new_psw & PSW_N) != 0) != ((new_psw & PSW_C) != 0)) new_psw |= PSW_V;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->RMWb[m_methdest]);
 }
 
 void CProcessor::ExecuteSXT()  // SXT - sign-extend
@@ -1619,9 +2463,12 @@ void CProcessor::ExecuteSXT()  // SXT - sign-extend
 
     if (!GetN()) new_psw |= PSW_Z;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->W[m_methdest]);
 }
+#endif
 
+
+#if 0
 void CProcessor::ExecuteMTPS()  // MTPS - move to PS
 {
     uint8_t dst;
@@ -1637,9 +2484,39 @@ void CProcessor::ExecuteMTPS()  // MTPS - move to PS
 
     SetLPSW((GetLPSW() & 0x10) | (dst & 0xEF));
     SetPC(GetPC());
-    m_internalTick = MTPS_TIMING[m_methdest];
+    waitstates_add(m_timing->MTPS[m_methdest]);
 }
+#else
+void CProcessor::ExecuteMTPS()
+{
+    constexpr unsigned int flags = P_REAbDST;
+    x_estate_s estate;
+    op_exec_prepare<flags>(estate);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
 
+    vm2::alu::alu1_s r = vm2::alu::opMTPS({estate.psw, estate.dst.alu_u16});
+
+    estate.psw = r.psw;
+    estate.res = r.dst;
+
+    op_exec_finalize<flags>(estate);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
+    SetPC(GetPC());
+
+    const unsigned int md = (flags & P_EADST) ? m_methdest : 0;
+    instime_t it = m_timing->MTPS[md];
+    it -= estate.delta;
+    waitstates_add(it);
+}
+#endif
+
+#if 0
 void CProcessor::ExecuteMFPS()  // MFPS - move from PS
 {
     uint8_t psw = GetLPSW();
@@ -1660,33 +2537,74 @@ void CProcessor::ExecuteMFPS()  // MFPS - move from PS
     if (psw & 0200) new_psw |= PSW_N;
     if (psw == 0) new_psw |= PSW_Z;
     SetLPSW(new_psw);
-    m_internalTick = CLR_TIMING[m_methdest];
+    waitstates_add(m_timing->MFPS[m_methdest]);
+}
+#else
+void CProcessor::ExecuteMFPS()
+{
+    constexpr unsigned int flags = P_RMWbDST | P_IGBDR;
+    x_estate_s estate;
+    op_exec_prepare<flags>(estate);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
+
+    vm2::alu::alu1_s r = vm2::alu::opMFPS({estate.psw, estate.dst.alu_u16});
+
+    estate.psw = r.psw;
+    estate.res = r.dst;
+
+    op_exec_finalize<flags>(estate);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
+
+    const unsigned int md = (flags & P_EADST) ? m_methdest : 0;
+    instime_t it = m_timing->MFPS[md];
+    it -= estate.delta;
+    waitstates_add(it);
+}
+#endif
+
+template<vm2::alu::cond_fn fn>
+void CProcessor::op_branch()
+{
+    bool taken = fn(GetPSW());
+    if (taken) {
+        SetPC(GetPC() + ((short)(char)(uint8_t)(m_instruction & 0xff)) * 2 );
+        waitstates_add(m_timing->Bxx[1]);
+    }
+    else
+        waitstates_add(m_timing->Bxx[0]);
 }
 
+#if PROCESSOR_USE_NEW_ALU == 0
 void CProcessor::ExecuteBR()
 {
     SetPC(GetPC() + ((short)(char)(uint8_t)(m_instruction & 0xff)) * 2 );
-    m_internalTick = BR_TIMING;
+    waitstates_add(m_timing->Bxx[1]);
 }
 
 void CProcessor::ExecuteBNE()
 {
     if (GetZ())
-        m_internalTick = BRANCH_FALSE_TIMING;
+        waitstates_add(m_timing->Bxx[0]);
     else
     {
         SetPC(GetPC() + ((short)(char)(uint8_t)(m_instruction & 0xff)) * 2 );
-        m_internalTick = BRANCH_TRUE_TIMING;
+        waitstates_add(m_timing->Bxx[1]);
     }
 }
 
 void CProcessor::ExecuteBEQ()
 {
     if (!GetZ())
-        m_internalTick = BRANCH_FALSE_TIMING;
+        waitstates_add(m_timing->Bxx[0]);
     else
     {
-        m_internalTick = BRANCH_TRUE_TIMING;
+        waitstates_add(m_timing->Bxx[1]);
         SetPC(GetPC() + ((short)(char)(uint8_t)(m_instruction & 0xff)) * 2 );
     }
 }
@@ -1694,10 +2612,10 @@ void CProcessor::ExecuteBEQ()
 void CProcessor::ExecuteBGE()
 {
     if (GetN() != GetV())
-        m_internalTick = BRANCH_FALSE_TIMING;
+        waitstates_add(m_timing->Bxx[0]);
     else
     {
-        m_internalTick = BRANCH_TRUE_TIMING;
+        waitstates_add(m_timing->Bxx[1]);
         SetPC(GetPC() + ((short)(char)(uint8_t)(m_instruction & 0xff)) * 2 );
     }
 }
@@ -1705,10 +2623,10 @@ void CProcessor::ExecuteBGE()
 void CProcessor::ExecuteBLT()
 {
     if (GetN() == GetV())
-        m_internalTick = BRANCH_FALSE_TIMING;
+        waitstates_add(m_timing->Bxx[0]);
     else
     {
-        m_internalTick = BRANCH_TRUE_TIMING;
+        waitstates_add(m_timing->Bxx[1]);
         SetPC(GetPC() + ((short)(char)(uint8_t)(m_instruction & 0xff)) * 2 );
     }
 }
@@ -1716,10 +2634,10 @@ void CProcessor::ExecuteBLT()
 void CProcessor::ExecuteBGT()
 {
     if ((GetN() != GetV()) || GetZ())
-        m_internalTick = BRANCH_FALSE_TIMING;
+        waitstates_add(m_timing->Bxx[0]);
     else
     {
-        m_internalTick = BRANCH_TRUE_TIMING;
+        waitstates_add(m_timing->Bxx[1]);
         SetPC(GetPC() + ((short)(char)(uint8_t)(m_instruction & 0xff)) * 2 );
     }
 }
@@ -1727,10 +2645,10 @@ void CProcessor::ExecuteBGT()
 void CProcessor::ExecuteBLE()
 {
     if (! ((GetN() != GetV()) || GetZ()))
-        m_internalTick = BRANCH_FALSE_TIMING;
+        waitstates_add(m_timing->Bxx[0]);
     else
     {
-        m_internalTick = BRANCH_TRUE_TIMING;
+        waitstates_add(m_timing->Bxx[1]);
         SetPC(GetPC() + ((short)(char)(uint8_t)(m_instruction & 0xff)) * 2 );
     }
 }
@@ -1738,10 +2656,10 @@ void CProcessor::ExecuteBLE()
 void CProcessor::ExecuteBPL()
 {
     if (GetN())
-        m_internalTick = BRANCH_FALSE_TIMING;
+        waitstates_add(m_timing->Bxx[0]);
     else
     {
-        m_internalTick = BRANCH_TRUE_TIMING;
+        waitstates_add(m_timing->Bxx[1]);
         SetPC(GetPC() + ((short)(char)(uint8_t)(m_instruction & 0xff)) * 2 );
     }
 }
@@ -1749,10 +2667,10 @@ void CProcessor::ExecuteBPL()
 void CProcessor::ExecuteBMI()
 {
     if (!GetN())
-        m_internalTick = BRANCH_FALSE_TIMING;
+        waitstates_add(m_timing->Bxx[0]);
     else
     {
-        m_internalTick = BRANCH_TRUE_TIMING;
+        waitstates_add(m_timing->Bxx[1]);
         SetPC(GetPC() + ((short)(char)(uint8_t)(m_instruction & 0xff)) * 2 );
     }
 }
@@ -1760,10 +2678,10 @@ void CProcessor::ExecuteBMI()
 void CProcessor::ExecuteBHI()
 {
     if (GetZ() || GetC())
-        m_internalTick = BRANCH_FALSE_TIMING;
+        waitstates_add(m_timing->Bxx[0]);
     else
     {
-        m_internalTick = BRANCH_TRUE_TIMING;
+        waitstates_add(m_timing->Bxx[1]);
         SetPC(GetPC() + ((short)(char)(uint8_t)(m_instruction & 0xff)) * 2 );
     }
 }
@@ -1771,10 +2689,10 @@ void CProcessor::ExecuteBHI()
 void CProcessor::ExecuteBLOS()
 {
     if (!(GetZ() || GetC()))
-        m_internalTick = BRANCH_FALSE_TIMING;
+        waitstates_add(m_timing->Bxx[0]);
     else
     {
-        m_internalTick = BRANCH_TRUE_TIMING;
+        waitstates_add(m_timing->Bxx[1]);
         SetPC(GetPC() + ((short)(char)(uint8_t)(m_instruction & 0xff)) * 2 );
     }
 }
@@ -1782,10 +2700,10 @@ void CProcessor::ExecuteBLOS()
 void CProcessor::ExecuteBVC()
 {
     if (GetV())
-        m_internalTick = BRANCH_FALSE_TIMING;
+        waitstates_add(m_timing->Bxx[0]);
     else
     {
-        m_internalTick = BRANCH_TRUE_TIMING;
+        waitstates_add(m_timing->Bxx[1]);
         SetPC(GetPC() + ((short)(char)(uint8_t)(m_instruction & 0xff)) * 2 );
     }
 }
@@ -1793,10 +2711,10 @@ void CProcessor::ExecuteBVC()
 void CProcessor::ExecuteBVS()
 {
     if (!GetV())
-        m_internalTick = BRANCH_FALSE_TIMING;
+        waitstates_add(m_timing->Bxx[0]);
     else
     {
-        m_internalTick = BRANCH_TRUE_TIMING;
+        waitstates_add(m_timing->Bxx[1]);
         SetPC(GetPC() + ((short)(char)(uint8_t)(m_instruction & 0xff)) * 2 );
     }
 }
@@ -1804,10 +2722,10 @@ void CProcessor::ExecuteBVS()
 void CProcessor::ExecuteBHIS()
 {
     if (GetC())
-        m_internalTick = BRANCH_FALSE_TIMING;
+        waitstates_add(m_timing->Bxx[0]);
     else
     {
-        m_internalTick = BRANCH_TRUE_TIMING;
+        waitstates_add(m_timing->Bxx[1]);
         SetPC(GetPC() + ((short)(char)(uint8_t)(m_instruction & 0xff)) * 2 );
     }
 }
@@ -1815,10 +2733,10 @@ void CProcessor::ExecuteBHIS()
 void CProcessor::ExecuteBLO()
 {
     if (!GetC())
-        m_internalTick = BRANCH_FALSE_TIMING;
+        waitstates_add(m_timing->Bxx[0]);
     else
     {
-        m_internalTick = BRANCH_TRUE_TIMING;
+        waitstates_add(m_timing->Bxx[1]);
         SetPC(GetPC() + ((short)(char)(uint8_t)(m_instruction & 0xff)) * 2 );
     }
 }
@@ -1850,9 +2768,11 @@ void CProcessor::ExecuteXOR()  // XOR
     if (dst & 0100000) new_psw |= PSW_N;
     if (dst == 0) new_psw |= PSW_Z;
     SetLPSW(new_psw);
-    m_internalTick = XOR_TIMING[m_methdest];
+    waitstates_add(m_timing->R_RMW[0][m_methdest]);
 }
+#endif
 
+#if 0
 void CProcessor::ExecuteMUL()  // MUL - multiply
 {
     uint16_t dst = GetReg(m_regsrc);
@@ -1874,9 +2794,43 @@ void CProcessor::ExecuteMUL()  // MUL - multiply
     if (res == 0) new_psw |= PSW_Z;
     if ((res > 32767) || (res < -32768)) new_psw |= PSW_C;
     SetLPSW(new_psw);
-    m_internalTick = MUL_TIMING[m_methdest];
+    waitstates_add(m_timing->MUL[m_methdest]);
 }
+#else
+void CProcessor::ExecuteMUL()
+{
+    constexpr unsigned int flags = P_RDSRC | P_READST | P_AFINV;
+    x_estate_s estate;
+    op_exec_prepare<flags>(estate);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
 
+    vm2::alu::alu1_s r = vm2::alu::opMUL({estate.psw, estate.src.alu_u16, estate.dst.alu_u16});
+
+    const unsigned int rb = estate.src.ea.reg();
+    const unsigned int rp = rb | 1;
+
+    const unsigned int res = r.dst;
+
+    // NOTE: order of write is important
+    SetReg(rb, (res >> 16) & 0xFFFF); // set base reg with high part
+    SetReg(rp, (res >>  0) & 0xFFFF); // set pair reg with low part
+
+    // NOTE: there are no 'no-reply' state on writeback (destination is srcR and it's pair)
+    // NOTE: update PSW only
+    estate.psw = r.psw;
+    op_exec_finalize<flags>(estate);
+
+    const unsigned int md = (flags & P_EADST) ? m_methdest : 0;
+    instime_t it = m_timing->MUL[md];
+    it -= estate.delta;
+    waitstates_add(it);
+}
+#endif
+
+#if 0
 void CProcessor::ExecuteDIV()  // DIV - divide
 {
     uint16_t ea = 0;
@@ -1891,16 +2845,19 @@ void CProcessor::ExecuteDIV()  // DIV - divide
 
     longsrc = (int32_t)(((uint32_t)GetReg(m_regsrc | 1)) | ((uint32_t)GetReg(m_regsrc) << 16));
 
-    m_internalTick = DIV_TIMING[m_methdest];
+    waitstates_add(m_timing->DIV[m_methdest]);
+    constexpr instime_t DIV_OVERFLOW_ADD { 4.0 };
 
     if (src2 == 0)
     {
+        waitstates_add(DIV_OVERFLOW_ADD);
         new_psw |= (PSW_V | PSW_C); //если делят на 0 -- то устанавливаем V и C
         SetLPSW(new_psw);
         return;
     }
     if ((longsrc == (int32_t)020000000000) && (src2 == -1))
     {
+        waitstates_add(DIV_OVERFLOW_ADD);
         new_psw |= PSW_V; // переполняемся, товарищи
         SetLPSW(new_psw);
         return;
@@ -1911,6 +2868,7 @@ void CProcessor::ExecuteDIV()  // DIV - divide
 
     if ((res > 32767) || (res < -32768))
     {
+        waitstates_add(DIV_OVERFLOW_ADD);
         new_psw |= PSW_V; // переполняемся, товарищи
         SetLPSW(new_psw);
         return;
@@ -1923,7 +2881,47 @@ void CProcessor::ExecuteDIV()  // DIV - divide
     if (res == 0) new_psw |= PSW_Z;
     SetLPSW(new_psw);
 }
+#else
+void CProcessor::ExecuteDIV()
+{
+    constexpr unsigned int flags = P_RDSRC | P_RDSRCPR | P_READST | P_AFINV;
+    x_estate_s estate;
+    op_exec_prepare<flags>(estate);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
 
+    vm2::alu::alu1_s r = vm2::alu::opDIV({estate.psw, estate.src.alu_u16, estate.dst.alu_u16});
+
+    const unsigned int rb = estate.src.ea.reg();
+    const unsigned int rp = rb | 1;
+
+    const unsigned int res = r.dst;
+
+    // NOTE: completely skip register(s) update on overflow
+    if ( (r.psw & PSW_V) == 0 ) {
+        // NOTE: order of write is important
+        SetReg(rp, (res >>  0) & 0xFFFF); // set pair reg with low part (rem)
+        SetReg(rb, (res >> 16) & 0xFFFF); // set base reg with high part (quo)
+    }
+
+    // NOTE: there are no 'no-reply' state on writeback (destination is srcR and it's pair)
+    // NOTE: update PSW only
+    estate.psw = r.psw;
+    op_exec_finalize<flags>(estate);
+
+    const unsigned int md = (flags & P_EADST) ? m_methdest : 0;
+    instime_t it = m_timing->DIV[md];
+    it -= estate.delta;
+    if (r.psw & PSW_V)
+        it += { 4.0 }; // additional 4 cycles on overflow
+
+    waitstates_add(it);
+}
+#endif
+
+#if 0
 void CProcessor::ExecuteASH()  // ASH - arithmetic shift
 {
     uint16_t ea = 0;
@@ -1939,25 +2937,27 @@ void CProcessor::ExecuteASH()  // ASH - arithmetic shift
     src |= (src & 040) ? 0177700 : 0;
     dst = (short)GetReg(m_regsrc);
 
-    m_internalTick = ASH_TIMING[m_methdest];
+    waitstates_add(m_timing->ASH[m_methdest]);
+
+    constexpr double ASH_S_TIMING = 4.0;
 
     if (src >= 0)
     {
+        waitstates_add(src * ASH_S_TIMING);
         while (src--)
         {
             if (dst & 0100000) new_psw |= PSW_C; else new_psw &= ~PSW_C;
             dst <<= 1;
             if ((dst < 0) != ((new_psw & PSW_C) != 0)) new_psw |= PSW_V;
-            m_internalTick = m_internalTick + ASH_S_TIMING;
         }
     }
     else
     {
+        waitstates_add( -( (1 + src) * ASH_S_TIMING ) );
         while (src++)
         {
             if (dst & 1) new_psw |= PSW_C; else new_psw &= ~PSW_C;
             dst >>= 1;
-            m_internalTick = m_internalTick + ASH_S_TIMING;
         }
     }
 
@@ -1967,7 +2967,43 @@ void CProcessor::ExecuteASH()  // ASH - arithmetic shift
     if (dst == 0) new_psw |= PSW_Z;
     SetLPSW(new_psw);
 }
+#else
+void CProcessor::ExecuteASH()
+{
+    constexpr unsigned int flags = P_RDSRC | P_READST | P_AFINV;
+    x_estate_s estate;
+    op_exec_prepare<flags>(estate);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
 
+    vm2::alu::alu1_s r = vm2::alu::opASH({estate.psw, estate.src.alu_u16, estate.dst.alu_u16});
+
+    const unsigned int rb  = estate.src.ea.reg();
+    const unsigned int res = r.dst;
+
+    SetReg(rb, res & 0xFFFF);
+
+    // NOTE: there are no 'no-reply' state on writeback (destination is srcR and it's pair)
+    // NOTE: update PSW only
+    estate.psw = r.psw;
+    op_exec_finalize<flags>(estate);
+
+    constexpr double ASH_S_STEP = 4.0;
+    unsigned int shamt  = estate.dst.alu_u16 & 0x3F;
+    if (shamt & 0x20)
+        shamt ^= 0x3F;
+
+    const unsigned int md = (flags & P_EADST) ? m_methdest : 0;
+    instime_t it = m_timing->ASH[md];
+    it += ASH_S_STEP * shamt;
+    it -= estate.delta;
+    waitstates_add(it);
+}
+#endif
+
+#if 0
 void CProcessor::ExecuteASHC()  // ASHC - arithmetic shift combined
 {
     uint16_t ea = 0;
@@ -1982,24 +3018,27 @@ void CProcessor::ExecuteASHC()  // ASHC - arithmetic shift combined
     src &= 0x3F;
     src |= (src & 040) ? 0177700 : 0;
     dst = ((uint32_t)GetReg(m_regsrc | 1)) | ((uint32_t)GetReg(m_regsrc) << 16);
-    m_internalTick = ASHC_TIMING[m_methdest];
+    waitstates_add(m_timing->ASHC[m_methdest]);
+    constexpr double ASHC_S_TIMING = 4.0;
+
     if (src >= 0)
     {
+        waitstates_add(src * ASHC_S_TIMING);
         while (src--)
         {
             if (dst & (int32_t)0x80000000L) new_psw |= PSW_C; else new_psw &= ~PSW_C;
             dst <<= 1;
             if ((dst < 0) != ((new_psw & PSW_C) != 0)) new_psw |= PSW_V;
-            m_internalTick = m_internalTick + ASHC_S_TIMING;
         }
     }
     else
     {
+        waitstates_add( -( (1 + src) * ASHC_S_TIMING ) );
+
         while (src++)
         {
             if (dst & 1) new_psw |= PSW_C; else new_psw &= ~PSW_C;
             dst >>= 1;
-            m_internalTick = m_internalTick + ASHC_S_TIMING;
         }
     }
 
@@ -2012,22 +3051,63 @@ void CProcessor::ExecuteASHC()  // ASHC - arithmetic shift combined
     if (dst == 0) new_psw |= PSW_Z;
     SetLPSW(new_psw);
 }
+#else
+void CProcessor::ExecuteASHC()
+{
+    constexpr unsigned int flags = P_RDSRC | P_RDSRCPR | P_READST | P_AFINV;
+    x_estate_s estate;
+    op_exec_prepare<flags>(estate);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
+
+    vm2::alu::alu1_s r = vm2::alu::opASHC({estate.psw, estate.src.alu_u16, estate.dst.alu_u16});
+
+    const unsigned int rb = estate.src.ea.reg();
+    const unsigned int rp = rb | 1;
+
+    const unsigned int res = r.dst;
+
+    // NOTE: order of write is important
+    SetReg(rb, (res >> 16) & 0xFFFF); // set base reg with high part
+    SetReg(rp, (res >>  0) & 0xFFFF); // set pair reg with low part
+
+    // NOTE: there are no 'no-reply' state on writeback (destination is srcR and it's pair)
+    // NOTE: update PSW only
+    estate.psw = r.psw;
+    op_exec_finalize<flags>(estate);
+
+    constexpr double ASHC_S_STEP = 4.0;
+    unsigned int shamt  = estate.dst.alu_u16 & 0x3F;
+    if (shamt & 0x20)
+        shamt ^= 0x3F;
+
+    const unsigned int md = (flags & P_EADST) ? m_methdest : 0;
+    instime_t it = m_timing->ASHC[md];
+    it += ASHC_S_STEP * shamt;
+    it -= estate.delta;
+    waitstates_add(it);
+}
+#endif
 
 void CProcessor::ExecuteSOB()  // SOB - subtract one: R = R - 1 ; if R != 0 : PC = PC - 2*nn
 {
     uint16_t dst = GetReg(m_regsrc);
-
-    m_internalTick = SOB_LAST_TIMING;
     --dst;
     SetReg(m_regsrc, dst);
 
+    instime_t it = m_timing->SOB[0];
     if (dst)
     {
-        m_internalTick = SOB_TIMING;
+        it = m_timing->SOB[1];
         SetPC(GetPC() - (m_instruction & (uint16_t)077) * 2 );
     }
+
+    waitstates_add(it);
 }
 
+#if PROCESSOR_USE_NEW_ALU == 0
 void CProcessor::ExecuteMOV()  // MOV - move
 {
     uint16_t src_addr, dst_addr;
@@ -2057,7 +3137,7 @@ void CProcessor::ExecuteMOV()  // MOV - move
     if (dst & 0100000) new_psw |= PSW_N;
     if (dst == 0) new_psw |= PSW_Z;
     SetLPSW(new_psw);
-    m_internalTick = MOV_TIMING[m_methsrc][m_methdest];
+    waitstates_add(m_timing->R_W[m_methsrc][m_methdest]);
 }
 
 void CProcessor::ExecuteMOVB()  // MOVB - move byte
@@ -2091,7 +3171,7 @@ void CProcessor::ExecuteMOVB()  // MOVB - move byte
     if (dst & 0200) new_psw |= PSW_N;
     if (dst == 0) new_psw |= PSW_Z;
     SetLPSW(new_psw);
-    m_internalTick = MOVB_TIMING[m_methsrc][m_methdest];
+    waitstates_add(m_timing->R_Wb[m_methsrc][m_methdest]);
 }
 
 void CProcessor::ExecuteCMP()  // CMP - compare
@@ -2130,7 +3210,7 @@ void CProcessor::ExecuteCMP()  // CMP - compare
     if (((src ^ src2) & ~(dst ^ src2)) & 0100000) new_psw |= PSW_V;
     if (((~src & src2) | (~(src ^ src2) & dst)) & 0100000) new_psw |= PSW_C;
     SetLPSW(new_psw);
-    m_internalTick = CMP_TIMING[m_methsrc][m_methdest];
+    waitstates_add(m_timing->R_R[m_methsrc][m_methdest]);
 }
 
 void CProcessor::ExecuteCMPB()  // CMPB - compare byte
@@ -2169,7 +3249,7 @@ void CProcessor::ExecuteCMPB()  // CMPB - compare byte
     if (((src ^ src2) & ~(dst ^ src2)) & 0200) new_psw |= PSW_V;
     if (((~src & src2) | (~(src ^ src2) & dst)) & 0200) new_psw |= PSW_C;
     SetLPSW(new_psw);
-    m_internalTick = CMP_TIMING[m_methsrc][m_methdest];
+    waitstates_add(m_timing->R_R[m_methsrc][m_methdest]);
 }
 
 void CProcessor::ExecuteBIT()  // BIT - bit test
@@ -2205,7 +3285,7 @@ void CProcessor::ExecuteBIT()  // BIT - bit test
     if (dst & 0100000) new_psw |= PSW_N;
     if (dst == 0) new_psw |= PSW_Z;
     SetLPSW(new_psw);
-    m_internalTick = CMP_TIMING[m_methsrc][m_methdest];
+    waitstates_add(m_timing->R_R[m_methsrc][m_methdest]);
 }
 
 void CProcessor::ExecuteBITB()  // BITB - bit test on byte
@@ -2241,7 +3321,7 @@ void CProcessor::ExecuteBITB()  // BITB - bit test on byte
     if (dst & 0200) new_psw |= PSW_N;
     if (dst == 0) new_psw |= PSW_Z;
     SetLPSW(new_psw);
-    m_internalTick = CMP_TIMING[m_methsrc][m_methdest];
+    waitstates_add(m_timing->R_R[m_methsrc][m_methdest]);
 }
 
 void CProcessor::ExecuteBIC()  // BIC - bit clear
@@ -2283,7 +3363,7 @@ void CProcessor::ExecuteBIC()  // BIC - bit clear
     if (dst & 0100000) new_psw |= PSW_N;
     if (dst == 0) new_psw |= PSW_Z;
     SetLPSW(new_psw);
-    m_internalTick = MOV_TIMING[m_methsrc][m_methdest];
+    waitstates_add(m_timing->R_RMW[m_methsrc][m_methdest]);
 }
 
 void CProcessor::ExecuteBICB()  // BICB - bit clear
@@ -2326,7 +3406,7 @@ void CProcessor::ExecuteBICB()  // BICB - bit clear
     if (dst & 0200) new_psw |= PSW_N;
     if (dst == 0) new_psw |= PSW_Z;
     SetLPSW(new_psw);
-    m_internalTick = MOVB_TIMING[m_methsrc][m_methdest];
+    waitstates_add(m_timing->R_RMWb[m_methsrc][m_methdest]);
 }
 
 void CProcessor::ExecuteBIS()  // BIS - bit set
@@ -2368,7 +3448,7 @@ void CProcessor::ExecuteBIS()  // BIS - bit set
     if (dst & 0100000) new_psw |= PSW_N;
     if (dst == 0) new_psw |= PSW_Z;
     SetLPSW(new_psw);
-    m_internalTick = MOV_TIMING[m_methsrc][m_methdest];
+    waitstates_add(m_timing->R_RMW[m_methsrc][m_methdest]);
 }
 
 void CProcessor::ExecuteBISB()  // BISB - bit set on byte
@@ -2410,7 +3490,7 @@ void CProcessor::ExecuteBISB()  // BISB - bit set on byte
     if (dst & 0200) new_psw |= PSW_N;
     if (dst == 0) new_psw |= PSW_Z;
     SetLPSW(new_psw);
-    m_internalTick = MOVB_TIMING[m_methsrc][m_methdest];
+    waitstates_add(m_timing->R_RMWb[m_methsrc][m_methdest]);
 }
 
 void CProcessor::ExecuteADD()  // ADD
@@ -2452,7 +3532,7 @@ void CProcessor::ExecuteADD()  // ADD
     if ((~(src ^ src2) & (dst ^ src2)) & 0100000) new_psw |= PSW_V;
     if (((src & src2) | ((src ^ src2) & ~dst)) & 0100000) new_psw |= PSW_C;
     SetLPSW(new_psw);
-    m_internalTick = MOVB_TIMING[m_methsrc][m_methdest];
+    waitstates_add(m_timing->R_RMW[m_methsrc][m_methdest]);
 }
 
 void CProcessor::ExecuteSUB()  // SUB
@@ -2494,28 +3574,30 @@ void CProcessor::ExecuteSUB()  // SUB
     if (((src ^ src2) & ~(dst ^ src)) & 0100000) new_psw |= PSW_V;
     if (((src & ~src2) | (~(src ^ src2) & dst)) & 0100000) new_psw |= PSW_C;
     SetLPSW(new_psw);
-    m_internalTick = MOVB_TIMING[m_methsrc][m_methdest];
+    waitstates_add(m_timing->R_RMW[m_methsrc][m_methdest]);
 }
+#endif
 
 void CProcessor::ExecuteEMT()  // EMT - emulator trap
 {
     m_EMT_rq = true;
-    m_internalTick = EMT_TIMING;
+//    waitstates_add(m_timing->SINT);
 }
 
 void CProcessor::ExecuteTRAP()
 {
     m_TRAPrq = true;
-    m_internalTick = EMT_TIMING;
+//    waitstates_add(m_timing->SINT);
 }
 
+#if 0
 void CProcessor::ExecuteJSR()  // JSR - jump subroutine: *--SP = R; R = PC; PC = &d (a-mode > 0)
 {
     if (m_methdest == 0)
     {
         // Неправильный метод адресации
         m_ILLGrq = true;
-        m_internalTick = EMT_TIMING;
+        //waitstates_add(m_timing->SINT);
     }
     else
     {
@@ -2529,10 +3611,49 @@ void CProcessor::ExecuteJSR()  // JSR - jump subroutine: *--SP = R; R = PC; PC =
         SetPC(dst);
         if (m_RPLYrq) return;
 
-        m_internalTick = JSR_TIMING[m_methdest - 1];
+        waitstates_add(m_timing->JSR[m_methdest]);
     }
 }
+#else
+void CProcessor::ExecuteJSR()
+{
+    constexpr unsigned int flags = P_RDSRC | P_EADST | P_NOPSW | P_AFINV;
+    x_estate_s estate;
+    op_exec_prepare<flags>(estate);
+    if (m_RPLYrq) {
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
 
+    if (estate.dst.ea.is_reg()) {
+        m_ILLGrq = true;
+        return;
+    }
+
+    const unsigned int addr = estate.dst.ea.addr();
+
+    unsigned int sp = GetSP();
+    sp -= 2;
+    SetSP(sp);
+    rsp_s rsp = bus_write_raw(sp, estate.src.u16);
+
+    unsigned int pc = GetPC();
+    SetReg(estate.src.ea.reg(), pc);
+    SetPC(addr);
+
+    if (rsp.is_noreply()) {
+        m_RPLYrq = true;
+        waitstates_set(VM2_RPLY_TIMEOUT);
+        return;
+    }
+
+    op_exec_finalize<flags>(estate);
+    const unsigned int md = (flags & P_EADST) ? m_methdest : 0;
+    instime_t it = m_timing->JSR[md];
+    it -= estate.delta;
+    waitstates_add(it);
+}
+#endif
 void CProcessor::ExecuteMARK ()  // MARK
 {
     SetSP( GetPC() + (m_instruction & 0x003F) * 2 );
@@ -2541,7 +3662,7 @@ void CProcessor::ExecuteMARK ()  // MARK
     SetSP( GetSP() + 2 );
     if (m_RPLYrq) return;
 
-    m_internalTick = MARK_TIMING;
+    waitstates_add(m_timing->MARK);
 }
 
 
@@ -2567,7 +3688,7 @@ void CProcessor::SaveToImage(uint8_t* pImage) const
     *pwImage++ = m_savepc;                          //   18     2   PC'
     *pwImage++ = m_savepsw;                         //   20     2   PSW'
     *pwImage++ = (m_okStopped ? 1 : 0);             //   22     2   Stopped
-    *pwImage++ = m_internalTick;                    //   24     2   Internal tick count
+    *pwImage++ = 0;//TODO: insert real value m_internalTick;                    //   24     2   Internal tick count
     uint8_t* pbImage = (uint8_t*) pwImage;
     uint8_t flags0 = 0;
     flags0 |= (m_stepmode ?   1 : 0);
@@ -2609,7 +3730,7 @@ void CProcessor::LoadFromImage(const uint8_t* pImage)
     m_savepc    = *pwImage++;                       //   18     2   PC'
     m_savepsw   = *pwImage++;                       //   20     2   PSW'
     m_okStopped = (*pwImage++ != 0);                //   22     2   Stopped
-    m_internalTick = *pwImage++;                    //   24     2   Internal tick count
+    /* m_internalTick = */ *pwImage++; // TODO: insert real value                     //   24     2   Internal tick count
     const uint8_t* pbImage = (const uint8_t*) pwImage;
     uint8_t flags0 = *pbImage++;                    //   26     1   Flags
     m_stepmode  = ((flags0 &  1) != 0);
@@ -2640,6 +3761,7 @@ void CProcessor::LoadFromImage(const uint8_t* pImage)
     memcpy(m_virq, pImage + 32, 2 * 16);            //   32    32   VIRQ vectors
 }
 
+#if 0
 uint16_t CProcessor::GetWordAddr (uint8_t meth, uint8_t reg)
 {
     switch (meth)
@@ -2729,6 +3851,6 @@ uint16_t CProcessor::GetByteAddr (uint8_t meth, uint8_t reg)
 
     return addr;
 }
-
+#endif
 
 //////////////////////////////////////////////////////////////////////

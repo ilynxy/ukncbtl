@@ -12,6 +12,7 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 
 #pragma once
 
+#include <windows.h>
 #include "Defines.h"
 
 class CProcessor;
@@ -301,6 +302,7 @@ private:
     uint32_t    m_dwTrace;  ///< Trace flags
 
     uint16_t    m_timer;
+    uint16_t    m_timercounter;
     uint16_t    m_timerreload;
     uint16_t    m_timerflags;
     uint16_t    m_timerdivider;

@@ -18,7 +18,7 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 #define APP_VERSION_STRING "DEBUG"
 #define APP_REVISION 0
 #elif !defined(PRODUCT)
-#define APP_VERSION_STRING "RELEASE"
+#define APP_VERSION_STRING "NIGHTLY"
 #define APP_REVISION 0
 #else
 #include "Version.h"

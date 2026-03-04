@@ -13,9 +13,9 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 /// \details See defines in header file Emubase.h
 
 #include "stdafx.h"
-#include <sys/stat.h>
+//#include <sys/stat.h>
 #include <share.h>
-#include "Emubase.h"
+#include "Floppy.hpp"
 
 
 //////////////////////////////////////////////////////////////////////

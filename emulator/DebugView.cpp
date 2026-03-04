@@ -464,6 +464,11 @@ void DebugView_DrawProcessor(HDC hdc, const CProcessor* pProc, int x, int y, WOR
     BOOL okHaltMode = pProc->IsHaltMode();
     TextOut(hdc, x, y + 13 * cyLine, okHaltMode ? _T("HALT") : _T("USER"), 4);
 
+    TCHAR pbuf[32];
+    auto plen = _sntprintf(pbuf, 32,_T("%llu"), pProc->m_totalticks);
+    TextOut(hdc, x + cxChar * 15, y + 13 * cyLine, pbuf, plen);
+
+
     // "Stopped" flag
     BOOL okStopped = pProc->IsStopped();
     if (okStopped)

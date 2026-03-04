@@ -693,6 +693,15 @@ void ConsoleView_CmdStepOver(const ConsoleCommandParams& /*params*/)
 
     MainWindow_UpdateAllViews();
 }
+
+void ConsoleView_CmdStepOverPerf(const ConsoleCommandParams& params)
+{
+    CProcessor* pProc = ConsoleView_GetCurrentProcessor();
+    pProc->m_totalticks = 0;
+
+    ConsoleView_CmdStepOver(params);
+}
+
 void ConsoleView_CmdRun(const ConsoleCommandParams& /*params*/)
 {
     Emulator_Start();
@@ -731,6 +740,21 @@ void ConsoleView_CmdRemoveAllBreakpoints(const ConsoleCommandParams& /*params*/)
     DebugView_Redraw();
     DisasmView_Redraw();
 }
+
+void ConsoleView_CmdClearPerfcounter(const ConsoleCommandParams& /*params*/)
+{
+    CProcessor* pProc = ConsoleView_GetCurrentProcessor();
+    pProc->m_totalticks = 0;
+}
+
+void ConsoleView_CmdPrintPerfcounter(const ConsoleCommandParams& /*params*/)
+{
+    CProcessor* pProc = ConsoleView_GetCurrentProcessor();
+    ConsoleView_PrintFormat(_T("PerfCounter:  %llu\r\n"), pProc->m_totalticks);
+}
+
+
+
 void ConsoleView_CmdSetBreakpointAtAddress(const ConsoleCommandParams& params)
 {
     uint16_t address = params.paramOct1;
@@ -841,6 +865,7 @@ static ConsoleCommands[] =
     { _T("rps"), ARGINFO_NONE, ConsoleView_CmdPrintRegisterPSW },
     { _T("s"), ARGINFO_NONE, ConsoleView_CmdStepInto },
     { _T("so"), ARGINFO_NONE, ConsoleView_CmdStepOver },
+    { _T("sop"), ARGINFO_NONE, ConsoleView_CmdStepOverPerf },
     { _T("d%ho"), ARGINFO_OCT, ConsoleView_CmdPrintDisassembleAtAddress },
     { _T("D%ho"), ARGINFO_OCT, ConsoleView_CmdPrintDisassembleAtAddress },
     { _T("d"), ARGINFO_NONE, ConsoleView_CmdPrintDisassembleAtPC },
@@ -856,6 +881,8 @@ static ConsoleCommands[] =
     { _T("b"), ARGINFO_NONE, ConsoleView_CmdPrintAllBreakpoints },
     { _T("bc%ho"), ARGINFO_OCT, ConsoleView_CmdRemoveBreakpointAtAddress },
     { _T("bc"), ARGINFO_NONE, ConsoleView_CmdRemoveAllBreakpoints },
+    { _T("cc"), ARGINFO_NONE, ConsoleView_CmdClearPerfcounter },
+    { _T("pp"), ARGINFO_NONE, ConsoleView_CmdPrintPerfcounter },
     { _T("fc%ho %ho"), ARGINFO_OCT_OCT, ConsoleView_CmdCalculateFloatNumber },
 #if !defined(PRODUCT)
     { _T("t"), ARGINFO_NONE, ConsoleView_CmdTraceLogOnOff },

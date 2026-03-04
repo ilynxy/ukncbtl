@@ -15,12 +15,678 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "Defines.h"
 #include "Memory.h"
 
+#define PROCESSOR_USE_NEW_ALU 1
 
-class CMemoryController;
+#include "xpu_instimes.hpp"
+
+//class CMemoryController;
 
 //////////////////////////////////////////////////////////////////////
 
 /// \brief KM1801VM2 processor
+namespace vm2
+{
+
+struct alu {
+    using psw_t  = unsigned int; // NOTE: have to be at least 16 bit
+    using data_t = unsigned int; // NOTE: have to be at least 32 bit
+
+    using cond_fn = bool (*)(const psw_t);
+
+    static bool condBR   (const psw_t psw) { return  true;   };
+    static bool condBNE  (const psw_t psw) { return !condBEQ(psw); };
+    static bool condBEQ  (const psw_t psw) { return (psw & PSW_Z); };
+    static bool condBPL  (const psw_t psw) { return !condBMI(psw); };
+    static bool condBMI  (const psw_t psw) { return (psw & PSW_N); };
+    static bool condBVC  (const psw_t psw) { return !condBVS(psw); };
+    static bool condBVS  (const psw_t psw) { return (psw & PSW_V); };
+    static bool condBHIS (const psw_t psw) { return !condBLO(psw); }; // BCC
+    static bool condBLO  (const psw_t psw) { return (psw & PSW_C); }; // BCS
+    static bool condBGE  (const psw_t psw) { return !condBLT(psw);        };
+    static bool condBLT  (const psw_t psw) { return condBMI(psw) != condBVS(psw); };
+    static bool condBGT  (const psw_t psw) { return !condBLE(psw); };
+    static bool condBLE  (const psw_t psw) { return condBEQ(psw) || condBLT(psw); };
+    static bool condBHI  (const psw_t psw) { return !condBLOS(psw); };
+    static bool condBLOS (const psw_t psw) { return condBLO(psw) || condBEQ(psw); };
+
+    struct alu1_s {
+        psw_t   psw;
+        data_t  dst; // NOTE: combined { Rn|1, Rn } for EIS
+    };
+    using alu1_fn = alu1_s (*)(const alu1_s);
+
+
+    static void NZ_as_u16(psw_t& psw, data_t data)
+    {
+        psw   &= ~(PSW_N | PSW_Z);
+        if (data  & 0x8000) psw |= PSW_N;
+        if (data == 0x0000) psw |= PSW_Z;
+    }
+
+    static void NZ_as_u08(psw_t& psw, data_t data)
+    {
+        psw   &= ~(PSW_N | PSW_Z);
+        if (data  & 0x80) psw |= PSW_N;
+        if (data == 0x00) psw |= PSW_Z;
+    }
+
+    static alu1_s opSWAB(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+
+        data_t data  = ((s.dst << 8) & 0xFF00) | ((s.dst >> 8) & 0x00FF);
+
+        NZ_as_u08(psw, data & 0xFF); // NOTE: flags by low byte of 16-bit result
+        return { psw, data };
+    }
+
+    static alu1_s opCLR(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_N | PSW_Z | PSW_V | PSW_C);
+        data_t data  = 0;
+        psw |= PSW_Z;
+        return { psw, data };
+    }
+
+    static alu1_s opCLRB(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_N | PSW_Z | PSW_V | PSW_C);
+        data_t data  = 0;
+        psw |= PSW_Z;
+        return { psw, data };
+    }
+
+    static alu1_s opCOM(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+
+        data_t data  = (~s.dst) & 0xFFFF;
+
+        NZ_as_u16(psw, data);
+        psw |= PSW_C;
+        return { psw, data };
+    }
+
+    static alu1_s opCOMB(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+
+        data_t data  = (~s.dst) & 0xFF;
+
+        NZ_as_u08(psw, data);
+        psw |= PSW_C;
+        return { psw, data };
+    }
+
+    static alu1_s opINC(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V);
+
+        data_t data  = (s.dst + 1) & 0xFFFF;
+
+        NZ_as_u16(psw, data);
+        if (data == 0x8000) psw |= PSW_V;
+        return { psw, data };
+    }
+
+    static alu1_s opINCB(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V);
+
+        data_t data  = (s.dst + 1) & 0xFF;
+
+        NZ_as_u08(psw, data);
+        if (data == 0x80) psw |= PSW_V;
+        return { psw, data };
+    }
+
+    static alu1_s opDEC(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V);
+
+        data_t data  = (s.dst - 1) & 0xFFFF;
+
+        NZ_as_u16(psw, data);
+        if (data == 0x7FFF) psw |= PSW_V;
+        return { psw, data };
+    }
+
+    static alu1_s opDECB(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V);
+
+        data_t data  = (s.dst - 1) & 0xFF;
+
+        NZ_as_u08(psw, data);
+        if (data == 0x7F) psw |= PSW_V;
+        return { psw, data };
+    }
+
+    static alu1_s opNEG(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+
+        data_t data  = (0u - s.dst) & 0xFFFF;
+
+        NZ_as_u16(psw, data);
+        if (data == 0x8000) psw |= PSW_V;
+        if (data != 0x0000) psw |= PSW_C;
+        return { psw, data };
+    }
+
+    static alu1_s opNEGB(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+
+        data_t data  = (0u - s.dst) & 0xFF;
+
+        NZ_as_u08(psw, data);
+        if (data == 0x80) psw |= PSW_V;
+        if (data != 0x00) psw |= PSW_C;
+        return { psw, data };
+    }
+
+    static alu1_s opADC(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+
+        unsigned int CF = (s.psw & PSW_C) != 0;
+        data_t data  = (s.dst + CF) & 0xFFFF;
+
+        NZ_as_u16(psw, data);
+        if ((data == 0x8000) && CF) psw |= PSW_V;
+        if ((data == 0x0000) && CF) psw |= PSW_C;
+        return { psw, data };
+    }
+
+    static alu1_s opADCB(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+
+        unsigned int CF = (s.psw & PSW_C) != 0;
+        data_t data  = (s.dst + CF) & 0xFF;
+
+        NZ_as_u08(psw, data);
+        if ((data == 0x80) && CF) psw |= PSW_V;
+        if ((data == 0x00) && CF) psw |= PSW_C;
+        return { psw, data };
+    }
+
+    static alu1_s opSBC(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+
+        unsigned int CF = (s.psw & PSW_C) != 0;
+        data_t data  = (s.dst - CF) & 0xFFFF;
+
+        NZ_as_u16(psw, data);
+        if ((data == 0x7FFF) && CF) psw |= PSW_V;
+        if ((data == 0xFFFF) && CF) psw |= PSW_C;
+        return { psw, data };
+    }
+
+    static alu1_s opSBCB(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+
+        unsigned int CF = (s.psw & PSW_C) != 0;
+        data_t data  = (s.dst - CF) & 0xFF;
+
+        NZ_as_u08(psw, data);
+        if ((data == 0x7F) && CF) psw |= PSW_V;
+        if ((data == 0xFF) && CF) psw |= PSW_C;
+        return { psw, data };
+    }
+
+    static alu1_s opTST(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+
+        data_t data  = s.dst & 0xFFFF;
+
+        NZ_as_u16(psw, data);
+        return { psw, data };
+    }
+
+    static alu1_s opTSTB(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+        data_t data  = s.dst & 0xFF;
+
+        NZ_as_u08(psw, data);
+        return { psw, data };
+    }
+
+    static alu1_s opROR(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+
+        unsigned int CF = (s.psw & PSW_C) != 0;
+        data_t data  = (s.dst >> 1) | (CF << 15);
+
+        NZ_as_u16(psw, data);
+        if (s.dst & 0x0001) psw |= PSW_C;
+        if (((psw & PSW_N) != 0) != ((psw & PSW_C) != 0)) psw |= PSW_V;
+        return { psw, data };
+    }
+
+    static alu1_s opRORB(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+
+        unsigned int CF = (s.psw & PSW_C) != 0;
+        data_t data  = (s.dst >> 1) | (CF << 7);
+
+        NZ_as_u08(psw, data);
+        if (s.dst & 0x01) psw |= PSW_C;
+        if (((psw & PSW_N) != 0) != ((psw & PSW_C) != 0)) psw |= PSW_V;
+        return { psw, data };
+    }
+
+    static alu1_s opROL(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+
+        unsigned int CF = (s.psw & PSW_C) != 0;
+        data_t data  = ((s.dst << 1) | CF) & 0xFFFF;
+
+        NZ_as_u16(psw, data);
+        if (s.dst & 0x8000) psw |= PSW_C;
+        if (((psw & PSW_N) != 0) != ((psw & PSW_C) != 0)) psw |= PSW_V;
+        return { psw, data };
+    }
+
+    static alu1_s opROLB(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+
+        unsigned int CF = (s.psw & PSW_C) != 0;
+        data_t data  = ((s.dst << 1) | CF) & 0xFF;
+
+        NZ_as_u08(psw, data);
+        if (s.dst & 0x80) psw |= PSW_C;
+        if (((psw & PSW_N) != 0) != ((psw & PSW_C) != 0)) psw |= PSW_V;
+        return { psw, data };
+    }
+
+    static alu1_s opASR(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+
+        data_t data  = (s.dst >> 1) | (s.dst & 0x8000);
+
+        NZ_as_u16(psw, data);
+        if (s.dst & 0x0001) psw |= PSW_C;
+        if (((psw & PSW_N) != 0) != ((psw & PSW_C) != 0)) psw |= PSW_V;
+        return { psw, data };
+    }
+
+    static alu1_s opASRB(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+
+        data_t data  = (s.dst >> 1) | (s.dst & 0x80);
+
+        NZ_as_u08(psw, data);
+        if (s.dst & 0x01) psw |= PSW_C;
+        if (((psw & PSW_N) != 0) != ((psw & PSW_C) != 0)) psw |= PSW_V;
+        return { psw, data };
+    }
+
+    static alu1_s opASL(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+
+        data_t data  = (s.dst << 1) & 0xFFFF;
+
+        NZ_as_u16(psw, data);
+        if (s.dst & 0x8000) psw |= PSW_C;
+        if (((psw & PSW_N) != 0) != ((psw & PSW_C) != 0)) psw |= PSW_V;
+        return { psw, data };
+    }
+
+    static alu1_s opASLB(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+
+        data_t data  = (s.dst << 1) & 0xFF;
+
+        NZ_as_u08(psw, data);
+        if (s.dst & 0x80) psw |= PSW_C;
+        if (((psw & PSW_N) != 0) != ((psw & PSW_C) != 0)) psw |= PSW_V;
+        return { psw, data };
+    }
+
+    static alu1_s opSXT(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_Z | PSW_V);
+
+        unsigned int NF = (s.psw & PSW_N) != 0;
+        data_t data  = (-NF) & 0xFFFF;
+
+        if (!NF) psw |= PSW_Z;
+        return { psw, data };
+    }
+
+    static alu1_s opMTPS(const alu1_s s)
+    {
+        psw_t psw = s.psw & PSW_T;
+        psw |= (s.dst & 0xFF) & ~(PSW_T);
+        return { psw, s.dst };
+    }
+
+    static alu1_s opMFPS(const alu1_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V);
+
+        data_t data = ((s.psw & 0xFF) ^ 0x80) - 0x80;
+
+        NZ_as_u08(psw, data);
+        return { psw, data };
+    }
+
+    struct alu2_s {
+        psw_t   psw;
+        data_t  src;    // NOTE: combined { Rn|1, Rn } for EIS
+        data_t  dst;
+    };
+    using alu2_fn = alu1_s (*)(const alu2_s);
+
+    static alu1_s uopAND(const alu2_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V);
+        data_t data  = (s.dst & s.src) & 0xFFFF;
+
+        NZ_as_u16(psw, data);
+        return { psw, data };
+    }
+
+    static alu1_s uopANDB(const alu2_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V);
+        data_t data  = (s.dst & s.src) & 0xFF;
+
+        NZ_as_u08(psw, data);
+        return { psw, data };
+    }
+
+    static alu1_s uopOR(const alu2_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V);
+        data_t data  = (s.dst | s.src) & 0xFFFF;
+
+        NZ_as_u16(psw, data);
+        return { psw, data };
+    }
+
+    static alu1_s uopORB(const alu2_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V);
+        data_t data  = (s.dst | s.src) & 0xFF;
+
+        NZ_as_u08(psw, data);
+        return { psw, data };
+    }
+
+    static alu1_s uopADD(const alu2_s s)
+    {
+        // TODO: add is sub(-a, b) + CF inversion
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+        data_t data  = (s.dst + s.src) & 0xFFFF;
+
+        NZ_as_u16(psw, data);
+        if ((~(s.src ^ s.dst) & (data  ^ s.dst)) & 0x8000) psw |= PSW_V;
+        if (((s.src & s.dst) | ((s.src ^ s.dst) & ~data)) & 0x8000) psw |= PSW_C;
+        return { psw, data };
+    }
+
+//    static alu1_s uopADDB(const alu2_s s)
+//    {
+//        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+//        data_t data  = (s.dst + s.src) & 0xFF;
+//
+//        NZ_as_u08(psw, data);
+//        if ((~(s.src ^ s.dst) & (s.src ^ data)) & 0x80) psw |= PSW_V;
+//        if (((s.src & s.dst) | ((s.src ^ s.dst) & ~data)) & 0x80) psw |= PSW_C;
+//        return { psw, data };
+//    }
+
+    static alu1_s uopSUB(const alu2_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+        data_t data  = (s.dst - s.src) & 0xFFFF;
+
+        NZ_as_u16(psw, data);
+        if (((s.src ^  s.dst) & ~(data  ^ s.src)) & 0x8000) psw |= PSW_V;
+        if (((s.src & ~s.dst) | (~(s.src ^ s.dst) & data)) & 0x8000) psw |= PSW_C;
+        return { psw, data };
+    }
+
+    static alu1_s uopSUBB(const alu2_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V | PSW_C);
+        data_t data  = (s.dst - s.src) & 0xFF;
+
+        NZ_as_u08(psw, data);
+        if (((s.src ^  s.dst) & ~(data  ^ s.src)) & 0x80) psw |= PSW_V;
+        if (((s.src & ~s.dst) | (~(s.src ^ s.dst) & data)) & 0x80) psw |= PSW_C;
+        return { psw, data };
+    }
+
+
+    static alu1_s opMOV(const alu2_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V);
+        data_t data  = s.src & 0xFFFF;
+
+        NZ_as_u16(psw, data);
+        return { psw, data };
+    }
+
+    static alu1_s opMOVB(const alu2_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V);
+        data_t data  = ((s.src & 0xFF) ^ 0x80) - 0x80;
+
+        NZ_as_u08(psw, data);
+        return { psw, data };
+    }
+
+    static alu1_s opCMP(const alu2_s s)
+    {
+        return uopSUB({s.psw, s.dst, s.src}); // NOTE: reversed order
+    }
+
+    static alu1_s opCMPB(const alu2_s s)
+    {
+        return uopSUBB({s.psw, s.dst, s.src});// NOTE: reversed order
+    }
+
+    static alu1_s opBIT(const alu2_s s)
+    {
+        return uopAND(s);
+    }
+
+    static alu1_s opBITB(const alu2_s s)
+    {
+        return uopANDB(s);
+    }
+
+    static alu1_s opBIC(const alu2_s s)
+    {
+        return uopAND({s.psw, ~s.src, s.dst}); // NOTE: not-and
+    }
+
+    static alu1_s opBICB(const alu2_s s)
+    {
+        return uopANDB({s.psw, ~s.src, s.dst}); // NOTE: not-and
+    }
+
+    static alu1_s opBIS(const alu2_s s)
+    {
+        return uopOR(s);
+    }
+
+    static alu1_s opBISB(const alu2_s s)
+    {
+        return uopORB(s);
+    }
+
+    static alu1_s opADD(const alu2_s s)
+    {
+        return uopADD(s);
+    }
+
+    static alu1_s opSUB(const alu2_s s)
+    {
+        return uopSUB(s);
+    }
+
+    static alu1_s opXOR(const alu2_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_V);
+        data_t data  = (s.dst ^ s.src) & 0xFFFF;
+
+        NZ_as_u16(psw, data);
+        return { psw, data };
+    }
+
+    // EIS
+    static alu1_s opASHC(const alu2_s s)
+    {
+        psw_t  psw = s.psw & ~(PSW_N | PSW_Z | PSW_V | PSW_C);
+        int src    = ((s.src & 0xFFFFFFFF) ^ 0x80000000) - 0x80000000;
+        int shamt  = ((s.dst & 0x3F) ^ 0x20) - 0x20;
+        do {
+            if (shamt == 0)
+                break;
+
+            if (shamt > 0) {
+                int so = src >> (31 - shamt);
+                src <<= (+shamt);
+
+                if (so & 0x00000002u)
+                    psw |= PSW_C;
+
+                if ((so != 0) && (so != -1))
+                    psw |= PSW_V;
+            }
+            else {
+                src >>= (-shamt - 1);
+                if (src & 0x00000001u)
+                    psw |= PSW_C;
+                src >>= 1;
+            }
+        } while (false);
+
+        data_t data = static_cast<data_t>(src);
+
+        // NOTE: flags by whole product
+        if (src  < 0)  psw |= PSW_N;
+        if (src == 0)  psw |= PSW_Z;
+        return { psw, data };
+    }
+
+    static alu1_s opASH(const alu2_s s)
+    {
+        psw_t  psw = s.psw & ~(PSW_N | PSW_Z | PSW_V | PSW_C);
+        int    src = ((s.src & 0xFFFF) ^ 0x8000) - 0x8000;
+
+        int shamt = ((s.dst & 0x3F) ^ 0x20) - 0x20;
+        do {
+            if (shamt == 0)
+                break;
+
+            if (shamt > 0) {
+
+                int so = (src << 16) >> (31 - shamt);
+                src <<= (+shamt);
+
+                if (so & 0x00000002u)
+                    psw |= PSW_C;
+
+                if ((so != 0) && (so != -1))
+                    psw |= PSW_V;
+
+            }
+            else {
+                src >>= (-shamt - 1);
+                if (src & 0x0001)
+                    psw |= PSW_C;
+                src >>= 1;
+            }
+
+        } while (false);
+
+        data_t data = src & 0xFFFF;
+
+        NZ_as_u16(psw, data);
+        return { psw, data };
+    }
+
+    static alu1_s opMUL(const alu2_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_N | PSW_Z | PSW_V | PSW_C);
+
+        int md = ((s.src & 0xFFFF) ^ 0x8000) - 0x8000; // multipilcand
+        int mr = ((s.dst & 0xFFFF) ^ 0x8000) - 0x8000; // multiplier
+        int pd = md * mr; // product
+
+        // NOTE: flags by whole product
+        if (pd  < 0)  psw |= PSW_N;
+        if (pd == 0)  psw |= PSW_Z;
+        if ( (pd > 32767) || (pd < -32768) )
+            psw |= PSW_C;
+
+        data_t data = static_cast<data_t>(pd);
+        return { psw, data };
+    }
+
+    static alu1_s opDIV(const alu2_s s)
+    {
+        psw_t  psw   = s.psw & ~(PSW_N | PSW_Z | PSW_V | PSW_C);
+        data_t data  = s.src;
+
+        // NOTE: VM2 don't modify target if there was overflow
+        do {
+            int den = ((s.dst & 0xFFFF) ^ 0x8000) - 0x8000;
+            if (den == 0) {
+                psw |= PSW_V | PSW_C;
+                break; // jump to retpoint
+            }
+
+            if ( (s.src == 0x80000000) && (den == -1) ) {
+                psw |= PSW_V;
+                break; // jump to retpoint
+
+            }
+            // C++20 and onward guarantees two's complement arithmetics
+            int num = ((s.src & 0xFFFFFFFF) ^ 0x80000000) - 0x80000000;
+
+            int quo = num / den;
+            int rem = num % den;
+
+            if ( (quo > 32767) || (quo < -32768) ) {
+                psw |= PSW_V;
+                break; // jump to retpoint
+            }
+
+            unsigned int rb = quo & 0xFFFFu;
+            unsigned int rp = rem & 0xFFFFu;
+
+            data = (rb << 16) | rp;
+
+            NZ_as_u16(psw, rb);
+
+        } while (false);
+
+//retpoint:
+        return { psw, data };
+    }
+};
+
+}
+
 class CProcessor
 {
 public:  // Constructor / initialization
@@ -37,13 +703,21 @@ public:  // Constructor / initialization
 public:
     static void Init();  ///< Initialize static tables
     static void Done();  ///< Release memory used for static tables
+    unsigned long long m_totalticks = 0;
 protected:  // Statics
     typedef void ( CProcessor::*ExecuteMethodRef )();
     static ExecuteMethodRef* m_pExecuteMethodMap;
 
+
 protected:  // Processor state
     TCHAR       m_name[5];          ///< Processor name (DO NOT use it inside the processor code!!!)
-    uint16_t    m_internalTick;     ///< How many ticks waiting to the end of current instruction
+
+    //int16_t     m_internalTick;     ///< How many ticks waiting to the end of current instruction
+    const xpu_instimes *m_timing;
+    instime_counter_t   ic_;
+    void waitstates_set(const instime_t instime) { ic_.set(instime); }
+    void waitstates_add(const instime_t instime) { ic_.add(instime); }
+
     uint16_t    m_psw;              ///< Processor Status Word (PSW)
     uint16_t    m_R[8];             ///< Registers (R0..R5, R6=SP, R7=PC)
     uint16_t    m_savepc;           ///< CPC register
@@ -58,6 +732,7 @@ protected:  // Processor state
 
 protected:  // Current instruction processing
     uint16_t    m_instruction;      ///< Curent instruction
+    instime_t   fetch_delta_;
     uint16_t    m_instructionpc;    ///< Address of the current instruction
     uint8_t     m_regsrc;           ///< Source register number
     uint8_t     m_methsrc;          ///< Source address mode
@@ -79,7 +754,10 @@ protected:  // Interrupt processing
     bool        m_IOT_rq;           ///< IOT command interrupt pending
     bool        m_EMT_rq;           ///< EMT command interrupt pending
     bool        m_TRAPrq;           ///< TRAP command interrupt pending
+
     uint16_t    m_virq[16];         ///< VIRQ vector
+    uint16_t    m_virq_p[16];       ///< Postponed VIRQ
+
     bool        m_ACLOreset;        ///< Power fail interrupt request reset
     bool        m_EVNTreset;        ///< EVNT interrupt request reset;
     uint8_t     m_VIRQreset;        ///< VIRQ request reset for given device
@@ -136,8 +814,8 @@ public:  // Processor control
     bool        InterruptProcessing();
     /// \brief Execute next command and process interrupts
     void        CommandExecution();
-    int         GetInternalTick() const { return m_internalTick; }
-    void        ClearInternalTick() { m_internalTick = 0; }
+//    int         GetInternalTick() const { return m_internalTick; }
+    void        ClearInternalTick() { waitstates_set(0); }
     void        SetTrace(bool okTrace) { m_okTrace = okTrace; }  ///< Set trace mode on/off
 
 public:  // Saving/loading emulator status (pImage addresses up to 32 bytes)
@@ -155,6 +833,40 @@ protected:  // Implementation - memory access
     void        SetWord(uint16_t address, uint16_t word) { m_pMemoryController->SetWord(address, IsHaltMode(), word); }
     uint8_t     GetByte(uint16_t address) { return m_pMemoryController->GetByte(address, IsHaltMode()); }
     void        SetByte(uint16_t address, uint8_t byte) { m_pMemoryController->SetByte(address, IsHaltMode(), byte); }
+
+#if BUS_USE_NEW_IO
+    using       rsp_s = CMemoryController::rsp_s;
+    using       rmw_e = CMemoryController::rmw_e;
+
+    unsigned int bus_read(unsigned int a16) {
+        bool sel = IsHaltMode();
+        auto rsp = m_pMemoryController->read_word(a16, sel);
+        if (rsp.is_noreply())
+            m_RPLYrq = true;
+
+        return rsp.data();
+    }
+
+    void bus_write(unsigned int a16, unsigned int d16, bool byte = false) {
+        bool sel = IsHaltMode();
+        auto rsp = m_pMemoryController->write_word(a16, sel, d16, byte);
+        if (rsp.is_noreply())
+            m_RPLYrq = true;
+    }
+
+    rsp_s bus_read_raw(unsigned int a16, rmw_e t = rmw_e::single) {
+        bool sel = IsHaltMode();
+        auto rsp = m_pMemoryController->read_word(a16, sel, t);
+        return rsp;
+    }
+
+    rsp_s bus_write_raw(unsigned int a16, unsigned int d16, bool byte = false, rmw_e t = rmw_e::single) {
+        bool sel = IsHaltMode();
+        auto rsp = m_pMemoryController->write_word(a16, sel, d16, byte, t);
+        return rsp;
+    }
+
+#endif
 
 protected:  // PSW bits calculations
     bool static CheckForNegative(uint8_t byte) { return (byte & 0200) != 0; }
@@ -202,6 +914,7 @@ protected:  // Implementation - instruction execution
 
     // Two fields
     void        ExecuteJMP ();
+#if PROCESSOR_USE_NEW_ALU == 0
     void        ExecuteSWAB ();
     void        ExecuteCLR ();
     void        ExecuteCLRB ();
@@ -227,11 +940,16 @@ protected:  // Implementation - instruction execution
     void        ExecuteASRB ();
     void        ExecuteASL ();
     void        ExecuteASLB ();
+#endif
     void        ExecuteMARK ();
+
+#if PROCESSOR_USE_NEW_ALU == 0
     void        ExecuteSXT ();
+#endif
     void        ExecuteMTPS ();
     void        ExecuteMFPS ();
 
+#if PROCESSOR_USE_NEW_ALU == 0
     // Branchs & interrupts
     void        ExecuteBR ();
     void        ExecuteBNE ();
@@ -248,19 +966,147 @@ protected:  // Implementation - instruction execution
     void        ExecuteBVS ();
     void        ExecuteBHIS ();
     void        ExecuteBLO ();
+#endif
+/*
+    bool condBR   () const { return  true;   };
+    bool condBNE  () const { return !GetZ(); };
+    bool condBEQ  () const { return  GetZ(); };
+    bool condBPL  () const { return !GetN(); };
+    bool condBMI  () const { return  GetN(); };
+    bool condBVC  () const { return !GetV(); };
+    bool condBVS  () const { return  GetV(); };
+    bool condBHIS () const { return !GetC(); }; // BCC
+    bool condBLO  () const { return  GetC(); }; // BCS
+    bool condBGE  () const { return !condBLT();        };
+    bool condBLT  () const { return  GetN() != GetV(); };
+    bool condBGT  () const { return !condBLE(); };
+    bool condBLE  () const { return  GetZ() || condBLT(); };
+    bool condBHI  () const { return !condBLOS(); };
+    bool condBLOS () const { return  GetC() || GetZ(); };
+*/
 
+public:
+    struct ea_s {
+        unsigned int ea;
+
+        constexpr ea_s() : ea{0x80000000} {};
+
+        struct reg_index {
+            unsigned int ri;
+        };
+
+        struct mem_addr {
+            unsigned int ma;
+        };
+
+        ea_s(const reg_index r)
+            : ea { ~(r.ri & 0xF) }
+        {
+        }
+
+        ea_s(const mem_addr m)
+            : ea { (m.ma & 0xFFFF) }
+        {
+        }
+
+        constexpr bool is_reg() const {
+            return (ea & 0x80000000);
+        }
+
+        constexpr bool is_mem() const {
+            return !is_reg();
+        }
+
+        constexpr unsigned int addr() const {
+            return ea;
+        }
+
+        constexpr unsigned int reg() const {
+            return ~ea;
+        }
+    };
+
+    struct op_arg_s {
+        int ea;
+        unsigned int u16;
+    };
+
+    struct estate_s {
+        op_arg_s        src;
+        op_arg_s        dst;
+        unsigned int    alu_src;
+        unsigned int    alu_dst;
+    };
+
+    struct x_op_arg_s {
+        ea_s            ea;
+        unsigned int    u16;
+        unsigned int    alu_u16;
+    };
+
+    struct x_estate_s {
+        x_op_arg_s      src;
+        x_op_arg_s      dst;
+
+        instime_t       delta;
+
+        unsigned int    psw;
+        unsigned int    res;
+    };
+
+    template<bool byte>
+    ea_s op_calculate_ea(x_estate_s& estate, unsigned int m77);
+
+    template<bool byte, CProcessor::rmw_e t>
+    void op_exec_fetch_field(x_estate_s& estate, x_op_arg_s& field);
+
+    template<unsigned int flags>
+    void op_exec_fetch_src(x_estate_s& estate);
+
+    template<unsigned int flags>
+    void op_exec_fetch_dst(x_estate_s& estate);
+
+    template<unsigned int flags>
+    void op_exec_prepare(x_estate_s& estate);
+
+    template<unsigned int flags>
+    void op_exec_finalize(x_estate_s& estate);
+
+
+//    template<unsigned int flags>
+//    void op_exec_read(estate_s& args);
+
+//    template<unsigned int flags>
+//    void op_exec_writeback(const op_arg_s& arg, unsigned int res);
+
+    template<vm2::alu::cond_fn fn>
+    void op_branch();
+
+    template<vm2::alu::alu1_fn fn, unsigned int flags>
+    void op_alu1();
+
+//    template<vm2::alu::alu1_fn fn, unsigned int flags>
+//    void op_alu15();
+
+    template<vm2::alu::alu2_fn fn, unsigned int flags>
+    void op_alu2();
+
+protected:
     void        ExecuteEMT ();
     void        ExecuteTRAP ();
 
     // Three fields
     void        ExecuteJSR ();
+#if PROCESSOR_USE_NEW_ALU == 0
     void        ExecuteXOR ();
+#endif
     void        ExecuteSOB ();
     void        ExecuteMUL ();
     void        ExecuteDIV ();
     void        ExecuteASH ();
     void        ExecuteASHC ();
 
+#if PROCESSOR_USE_NEW_ALU == 0
     // Four fields
     void        ExecuteMOV ();
     void        ExecuteMOVB ();
@@ -275,6 +1121,7 @@ protected:  // Implementation - instruction execution
 
     void        ExecuteADD ();
     void        ExecuteSUB ();
+#endif
 };
 
 inline void CProcessor::SetPSW(uint16_t word)

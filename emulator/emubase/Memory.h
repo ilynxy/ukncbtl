@@ -14,9 +14,13 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 
 #include "Defines.h"
 #include "Board.h"
+#include <cassert>
+
+#include "xpu_instimes.hpp"
 
 class CProcessor;
 
+#define BUS_USE_NEW_IO 1
 
 //////////////////////////////////////////////////////////////////////
 
@@ -72,6 +76,51 @@ public:  // Access to memory
     virtual uint16_t GetPortView(uint16_t address) const = 0;
     /// \brief Read SEL register
     virtual uint16_t GetSelRegister() = 0;
+
+#if BUS_USE_NEW_IO
+    struct rsp_s {
+        int             data_ = -1;
+        instime_t       dtime_{0.0};
+
+        explicit
+        constexpr rsp_s()
+            : data_{ -1 }
+        {
+        }
+
+        explicit
+        constexpr rsp_s(int data, instime_t delta = {})
+            : data_{ data }
+            , dtime_{ delta }
+        {
+        }
+
+        bool is_noreply() const { return (data_ < 0); }
+        unsigned int data() const {
+            //assert(!is_noreply());
+            return data_;
+        }
+    };
+
+    enum rmw_e {
+        single    ,
+        rmw       //
+    };
+
+    rsp_s read_word(unsigned int a16, bool sel, rmw_e t = single);
+    rsp_s write_word(unsigned int a16, bool sel, unsigned int data, bool byte, rmw_e t = single);
+
+    rsp_s read_sel() {
+        return rsp_s{ GetSelRegister() };
+    }
+    // TODO: rewrite VIRQ handling
+    rsp_s read_virq();
+
+protected:
+    virtual rsp_s read_port_word(unsigned int a16, bool sel, rmw_e t = single) = 0;
+    virtual rsp_s write_port_word(unsigned int a16, bool sel, unsigned int data, bool byte, rmw_e t = single) = 0;
+#endif
+
 public:  // Saving/loading emulator status (64 bytes)
     virtual void SaveToImage(uint8_t* pImage) = 0;
     virtual void LoadFromImage(const uint8_t* pImage) = 0;
@@ -105,6 +154,39 @@ protected:  // Access to I/O ports
     virtual void SetPortWord(uint16_t address, uint16_t word);
     virtual uint8_t GetPortByte(uint16_t address);
     virtual void SetPortByte(uint16_t address, uint8_t byte);
+
+#if BUS_USE_NEW_IO
+    virtual rsp_s read_port_word(unsigned int a16, bool sel, rmw_e t = single)/* override*/;
+    virtual rsp_s write_port_word(unsigned int a16, bool sel, unsigned int data, bool byte, rmw_e t = single)/* override*/;
+
+    struct acc_time_s {
+        instime_t R;
+        instime_t W;
+        instime_t RMW;
+        instime_t RMWb;
+    };
+
+    struct bus_times {
+        acc_time_s  RAM;
+        acc_time_s  IO[02000]; // 0176000-0177777 -> 02000
+    };
+
+    bus_times   bus_times_;
+
+    constexpr void set_io_time(unsigned int a16, const acc_time_s& bt) {
+        assert( (a16 >= 0176000) && (a16 <= 0177777) );
+        assert( (a16 & 0x01) == 0 );
+        const size_t i = a16 - 0176000;
+        auto& io = bus_times_.IO[i];
+        const auto& base = bus_times_.RAM;
+        io.R    = base.R    - bt.R;
+        io.W    = base.W    - bt.W;
+        io.RMW  = base.RMW  - bt.RMW;
+        io.RMWb = base.RMWb - bt.RMWb;
+    }
+
+#endif
+
 public:  // Saving/loading emulator status (64 bytes)
     virtual void SaveToImage(uint8_t* pImage);
     virtual void LoadFromImage(const uint8_t* pImage);
@@ -147,6 +229,39 @@ protected:  // Access to I/O ports
     virtual void SetPortWord(uint16_t address, uint16_t word);
     virtual uint8_t GetPortByte(uint16_t address);
     virtual void SetPortByte(uint16_t address, uint8_t byte);  //TODO
+
+#if BUS_USE_NEW_IO
+    virtual rsp_s read_port_word(unsigned int a16, bool sel, rmw_e t = single)/* override*/;
+    virtual rsp_s write_port_word(unsigned int a16, bool sel, unsigned int data, bool byte, rmw_e t = single)/* override*/;
+
+    struct acc_time_s {
+        instime_t R;
+        instime_t W;
+        instime_t RMW;
+        instime_t RMWb;
+    };
+
+    struct bus_times {
+        acc_time_s  RAM;
+        acc_time_s  ROM;
+        acc_time_s  IO[01000]; // 0177000-0177777 -> 01000
+    };
+
+    bus_times   bus_times_;
+
+    constexpr void set_io_time(unsigned int a16, const acc_time_s& bt) {
+        assert( (a16 >= 0177000) && (a16 <= 0177777) );
+        assert( (a16 & 0x01) == 0 );
+        const size_t i = a16 - 0177000;
+        auto& io = bus_times_.IO[i];
+        const auto& base = bus_times_.RAM;
+        io.R    = base.R    - bt.R;
+        io.W    = base.W    - bt.W;
+        io.RMW  = base.RMW  - bt.RMW;
+        io.RMWb = base.RMWb - bt.RMWb;
+    }
+#endif
+
 public:  // Saving/loading emulator status (64 bytes)
     virtual void SaveToImage(uint8_t* pImage);
     virtual void LoadFromImage(const uint8_t* pImage);

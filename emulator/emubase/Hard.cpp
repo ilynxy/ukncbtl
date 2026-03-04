@@ -12,10 +12,13 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 /// \brief Hard disk drive emulation.
 /// \details See defines in header file Emubase.h
 
-#include "stdafx.h"
-#include <sys/stat.h>
-#include "Emubase.h"
+//#include <sys/stat.h>
+#include <tchar.h>
+#include <assert.h>
 
+#include "Hard.hpp"
+
+#define ASSERT(x) assert(x)
 
 //////////////////////////////////////////////////////////////////////
 // Constants

@@ -299,6 +299,42 @@ CFirstMemoryController::CFirstMemoryController() : CMemoryController()
     m_Port176570 = m_Port176572 = m_Port176576 = 0;  // RS-232 ports
     m_Port176574 = 0200;
     m_NetStation = 0;
+
+    // kvant #031 (sampled by Alex Kisly)
+    bus_times_.RAM.R    = 32.5; // R
+    bus_times_.RAM.W    = 35.2; // W
+    bus_times_.RAM.RMW  = 40.4; // RMW
+    bus_times_.RAM.RMWb = 40.4; // RMWb
+
+    set_io_time(0176560, { 30.7, 30.1, 39.9, 39.8 });
+    set_io_time(0176562, { 30.7, 30.1, 39.9, 39.8 });
+    set_io_time(0176564, { 30.7, 30.1, 39.9, 39.8 });
+    set_io_time(0176566, { 30.7, 30.1, 39.9, 39.8 });
+
+    set_io_time(0176570, { 30.7, 30.1, 39.9, 39.8 });
+    set_io_time(0176572, { 30.7, 30.1, 39.9, 39.8 });
+    set_io_time(0176574, { 30.7, 30.1, 39.9, 39.8 });
+    set_io_time(0176576, { 30.7, 30.1, 39.9, 39.8 });
+
+    set_io_time(0176640, { 25.6, 25.6, 30.8, 30.8 });
+    set_io_time(0176642, { 32.9, 35.2, 40.4, 40.4 });
+
+    set_io_time(0176644, { 25.6, 25.6, 30.8, 30.8 });
+    set_io_time(0176646, { 25.6, 25.6, 30.8, 30.8 });
+
+    set_io_time(0176660, { 25.6, 25.6, 30.8, 30.8 });
+    set_io_time(0176662, { 25.6, 25.6, 30.8, 30.8 });
+    set_io_time(0176664, { 25.6, 25.6, 30.8, 30.8 });
+    set_io_time(0176666, { 25.6, 25.6, 30.8, 30.8 });
+    set_io_time(0176670, { 25.6, 25.6, 30.8, 30.8 });
+    set_io_time(0176672, { 25.6, 25.6, 30.8, 30.8 });
+    set_io_time(0176674, { 25.6, 25.6, 30.8, 30.8 });
+    set_io_time(0176676, { 25.6, 25.6, 30.8, 30.8 });
+
+    set_io_time(0177560, { 25.6, 25.6, 30.8, 30.8 });
+    set_io_time(0177562, { 25.6, 25.6, 30.8, 30.8 });
+    set_io_time(0177564, { 25.6, 25.6, 30.8, 30.8 });
+    set_io_time(0177566, { 25.6, 25.6, 30.8, 30.8 });
 }
 
 void CFirstMemoryController::DCLO_Signal()
@@ -803,6 +839,66 @@ CSecondMemoryController::CSecondMemoryController() : CMemoryController()
     m_Port177054 = 01401;
 
     m_Port177100 = m_Port177101 = m_Port177102 = 0377;
+
+// kvant #031 (sampled by Alex Kisly)
+    bus_times_.RAM.R    = 36.0; //40.0; // R
+    bus_times_.RAM.W    = 36.0; //40.0; // W
+    bus_times_.RAM.RMW  = 52.0; //60.0; // RMW
+    bus_times_.RAM.RMWb = 48.0; //56.0; // RMWb
+
+    // NOTE: R only
+    bus_times_.ROM.R    = 40.0 - 32.0;
+    bus_times_.ROM.W    = 0.0;
+    bus_times_.ROM.RMW  = 0.0;
+    bus_times_.ROM.RMWb = 0.0;
+
+    set_io_time(0177010, { 32.0, 36.0, 48.0, 48.0 });
+    set_io_time(0177012, { 32.0, 40.0, 52.0, 48.0 });
+    set_io_time(0177014, { 32.0, 32.0, 44.0, 44.0 });
+    set_io_time(0177016, { 32.0, 32.0, 44.0, 44.0 });
+    set_io_time(0177020, { 32.0, 32.0, 44.0, 44.0 });
+    set_io_time(0177022, { 32.0, 32.0, 44.0, 44.0 });
+    set_io_time(0177024, { 32.0, 32.0, 44.0, 44.0 });
+    set_io_time(0177026, { 32.0, 32.0, 44.0, 44.0 });
+
+    set_io_time(0177030, { 40.0, 40.0, 40.0, 40.0 });
+    set_io_time(0177032, { 40.0, 40.0, 40.0, 40.0 });
+    set_io_time(0177034, { 40.0, 40.0, 40.0, 40.0 });
+    set_io_time(0177036, { 40.0, 40.0, 40.0, 40.0 });
+    set_io_time(0177040, { 40.0, 40.0, 40.0, 40.0 });
+    set_io_time(0177042, { 40.0, 40.0, 40.0, 40.0 });
+    set_io_time(0177044, { 40.0, 40.0, 40.0, 40.0 });
+    set_io_time(0177046, { 40.0, 40.0, 40.0, 40.0 });
+    set_io_time(0177050, { 40.0, 40.0, 40.0, 40.0 });
+    set_io_time(0177052, { 40.0, 40.0, 40.0, 40.0 });
+
+    set_io_time(0177054, { 32.0, 32.0, 44.0, 44.0 });
+
+    set_io_time(0177060, { 32.0, 28.0, 40.0, 40.0 });
+    set_io_time(0177062, { 32.0, 28.0, 40.0, 40.0 });
+    set_io_time(0177064, { 32.0, 28.0, 28.0, 28.0 });
+    set_io_time(0177066, { 32.0, 28.0, 40.0, 40.0 });
+    set_io_time(0177070, { 32.0, 28.0, 40.0, 40.0 });
+    set_io_time(0177072, { 32.0, 28.0, 40.0, 40.0 });
+    set_io_time(0177074, { 32.0, 28.0, 40.0, 40.0 });
+    set_io_time(0177076, { 32.0, 28.0, 40.0, 40.0 });
+
+    set_io_time(0177100, { 32.0, 28.0, 40.0, 40.0 });
+    set_io_time(0177102, { 32.0, 28.0, 40.0, 40.0 });
+
+    set_io_time(0177130, { 32.0, 31.6, 40.0, 40.0 });
+    set_io_time(0177132, { 32.0, 31.6, 40.0, 40.0 });
+
+
+    set_io_time(0177700, { 32.0, 28.0, 40.0, 40.0 });
+    set_io_time(0177702, { 32.0, 28.0, 40.0, 40.0 });
+    set_io_time(0177704, { 32.0, 28.0, 40.0, 40.0 });
+
+    set_io_time(0177710, { 32.0, 28.0, 40.0, 40.0 }); // Ro
+    set_io_time(0177712, { 32.0, 28.0, 40.0, 40.0 }); // Wo
+    set_io_time(0177714, { 32.0, 28.0, 40.0, 40.0 });
+
+    set_io_time(0177716, { 32.0, 28.0, 40.0, 40.0 });
 }
 
 void CSecondMemoryController::DCLO_Signal()
@@ -1020,6 +1116,29 @@ uint16_t CSecondMemoryController::GetPortWord(uint16_t address)
     case 0177027:
         return m_Port177026;  // Plane Mask
 
+    // reserved
+    case 0177030:
+    case 0177031:
+    case 0177032:
+    case 0177033:
+    case 0177034:
+    case 0177035:
+    case 0177036:
+    case 0177037:
+    case 0177040:
+    case 0177041:
+    case 0177042:
+    case 0177043:
+    case 0177044:
+    case 0177045:
+    case 0177046:
+    case 0177047:
+    case 0177050:
+    case 0177051:
+    case 0177052:
+    case 0177053:
+        return 0177777;
+
     case 0177054:
     case 0177055:
         return m_Port177054;
@@ -1171,6 +1290,30 @@ void CSecondMemoryController::SetPortByte(uint16_t address, uint8_t byte)
     case 0177027:
         SetPortWord(address, word);
         break;
+
+    // reserved
+    case 0177030:
+    case 0177031:
+    case 0177032:
+    case 0177033:
+    case 0177034:
+    case 0177035:
+    case 0177036:
+    case 0177037:
+    case 0177040:
+    case 0177041:
+    case 0177042:
+    case 0177043:
+    case 0177044:
+    case 0177045:
+    case 0177046:
+    case 0177047:
+    case 0177050:
+    case 0177051:
+    case 0177052:
+    case 0177053:
+        break;
+
     case 0177054:
     case 0177055:
         SetPortWord(address, word);
@@ -1235,6 +1378,11 @@ void CSecondMemoryController::SetPortByte(uint16_t address, uint8_t byte)
     case 0177701:
         SetPortWord(address, word);
         break;
+
+    case 0177702:  // Keyboard data
+    case 0177703:
+        break;
+
     case 0177704: // fdd params:
     case 0177705:
         break;
@@ -1383,6 +1531,30 @@ void CSecondMemoryController::SetPortWord(uint16_t address, uint16_t word)
     case 0177027:
         m_Port177026 = word & 7;
         break;
+
+    // reserved
+    case 0177030:
+    case 0177031:
+    case 0177032:
+    case 0177033:
+    case 0177034:
+    case 0177035:
+    case 0177036:
+    case 0177037:
+    case 0177040:
+    case 0177041:
+    case 0177042:
+    case 0177043:
+    case 0177044:
+    case 0177045:
+    case 0177046:
+    case 0177047:
+    case 0177050:
+    case 0177051:
+    case 0177052:
+    case 0177053:
+        break;
+
     case 0177054:  // Address space control
     case 0177055:
         //DebugPrintFormat(_T("W %s, %s\r\n"), oct1, oct);
@@ -1456,6 +1628,7 @@ void CSecondMemoryController::SetPortWord(uint16_t address, uint16_t word)
         m_Port177700 = (m_Port177700 & 0177677) | (word & 0100);
         break;
     case 0177702:  // Keyboard data register
+    case 0177703:
         break;
 
     case 0177704: // fdd params:
@@ -1653,6 +1826,828 @@ void CSecondMemoryController::LoadFromImage(const uint8_t* pImage)
 
     UpdateMemoryMap();
 }
-
-
 //////////////////////////////////////////////////////////////////////
+#if BUS_USE_NEW_IO
+CMemoryController::rsp_s CMemoryController::read_word(unsigned int a16, bool sel, rmw_e t)
+{
+    unsigned int address = a16;
+    bool okHaltMode      = sel;
+    bool okExec = false;
+    uint16_t offset;
+    int addrtype = TranslateAddress(address, okHaltMode, okExec, &offset);
+
+    switch (addrtype)
+    {
+    case ADDRTYPE_RAM0:
+        return rsp_s { m_pBoard->GetRAMWord(0, offset) };
+
+//    case ADDRTYPE_RAM1:
+//        return rsp_s { m_pBoard->GetRAMWord(1, offset) };
+//
+//    case ADDRTYPE_RAM2:
+//        return rsp_s { m_pBoard->GetRAMWord(2, offset) };
+
+    case ADDRTYPE_RAM12:
+        return rsp_s { MAKEWORD(
+                m_pBoard->GetRAMByte(1, offset / 2),
+                m_pBoard->GetRAMByte(2, offset / 2)) };
+
+    case ADDRTYPE_ROM:
+        return rsp_s { m_pBoard->GetROMWord(offset), 8.0 }; // TODO: refactor it!
+
+    case ADDRTYPE_IO:
+        //return rsp_s { GetPortWord(address) };
+        return read_port_word(a16, sel, t);
+
+    case ADDRTYPE_ROMCART1:
+        return rsp_s { m_pBoard->GetROMCartWord(1, offset) };
+
+    case ADDRTYPE_ROMCART2:
+        return rsp_s { m_pBoard->GetROMCartWord(2, offset) };
+
+    case ADDRTYPE_DENY:
+    case ADDRTYPE_NONE:
+        return rsp_s{};
+    }
+
+    ASSERT(false);  // If we are here - then addrtype has invalid value
+    return rsp_s{};
+}
+
+CMemoryController::rsp_s CMemoryController::write_word(unsigned int a16, bool sel, unsigned int data, bool byte, rmw_e t)
+{
+    unsigned int address = a16;
+    bool okHaltMode      = sel;
+
+     uint16_t offset;
+     int addrtype = TranslateAddress(address, okHaltMode, false, &offset);
+     uint16_t word = data;
+
+     switch (addrtype)
+     {
+     case ADDRTYPE_RAM0:
+         m_pBoard->SetRAMWord(0, offset, word);
+         return rsp_s { word };
+
+//     case ADDRTYPE_RAM1:
+//         m_pBoard->SetRAMWord(1, offset, word);
+//         return rsp_s { word };
+//
+//     case ADDRTYPE_RAM2:
+//         m_pBoard->SetRAMWord(2, offset, word);
+//         return rsp_s { word };
+
+     case ADDRTYPE_RAM12:
+         m_pBoard->SetRAMByte(1, offset / 2, (uint8_t)(word & 0xff));
+         m_pBoard->SetRAMByte(2, offset / 2, (uint8_t)((word >> 8) & 0xff));
+         return rsp_s { word };
+
+     case ADDRTYPE_IO:
+         //SetPortWord(address, word);
+         //return rsp_s { word };
+         return write_port_word(a16, sel, data, byte, t);
+
+     case ADDRTYPE_ROMCART1:
+     case ADDRTYPE_ROMCART2:
+     case ADDRTYPE_ROM:
+         // writing to ROM - no reply
+         return rsp_s {};
+
+     case ADDRTYPE_DENY:
+     case ADDRTYPE_NONE:
+         return rsp_s{};
+     }
+
+     ASSERT(false);  // If we are here - then addrtype has invalid value
+     return rsp_s{};
+}
+
+CMemoryController::rsp_s CFirstMemoryController::read_port_word(unsigned int a16, bool sel, rmw_e t)
+{
+    const unsigned int a16e = a16 & 0xFFFE;
+//    const unsigned int a0   = a16 & 0x0001;
+
+    // TODO: refactor it
+    int result = -1;
+    switch (a16e)
+    {
+    case 0176640: // Plane address register
+        result = m_Port176640;
+        break;
+
+    case 0176642: // Plane 1 & 2 data register
+        m_Port176642 = MAKEWORD(m_pBoard->GetRAMByte(1, m_Port176640), m_pBoard->GetRAMByte(2, m_Port176640));
+        result = m_Port176642;
+        break;
+
+    case 0176644:
+        result = (m_Port176644 & 0x200);
+        break;
+
+    case 0176646:
+        result = 0;
+        break;
+
+    case 0177560:
+        result = m_pBoard->ChanRxStateGetCPU(0);
+        break;
+
+    case 0177562:
+        result = m_pBoard->ChanReadByCPU(0);
+        break;
+
+    case 0177564:
+        result = m_pBoard->ChanTxStateGetCPU(0);
+        break;
+
+    case 0176660:
+        result = m_pBoard->ChanRxStateGetCPU(1);
+        break;
+
+    case 0176662:
+        result = m_pBoard->ChanReadByCPU(1);
+        break;
+
+    case 0176664:
+        result = m_pBoard->ChanTxStateGetCPU(1);
+        break;
+
+    case 0176674:
+        result = m_pBoard->ChanTxStateGetCPU(2);
+        break;
+
+    case 0177566:
+    case 0176666:
+    case 0176676:
+    case 0176670:
+    case 0176672:
+        result = 0;
+        break;
+
+    // СА: Регистр состояния приемника
+    case 0176560:
+        result = (m_Port176560 + m_NetStation);
+        break;
+
+    // СА: Регистр данных приемника
+    // нижние 8 бит доступны по чтению
+    case 0176562:
+        m_Port176560 &= ~010200;  // Reset bit 12 and bit 7
+        result = (m_Port176562 + m_NetStation);
+        break;
+
+    case 0176564: // СА: Регистр состояния источника
+        result = (m_Port176564 + m_NetStation);
+        break;
+
+    case 0176566: // СА: Регистр данных источника
+        result = (0360 + m_NetStation);
+        break;
+
+    case 0176570:  // Стык С2: Регистр состояния приемника
+        result = m_Port176570;
+        break;
+
+    // Стык С2: Регистр данных приемника
+    // нижние 8 бит доступны по чтению
+    case 0176572:
+        m_Port176570 &= ~010200;  // Reset bit 12 and bit 7
+        result = m_Port176572;
+        break;
+
+    case 0176574:  // Стык С2: Регистр состояния источника
+        result = m_Port176574;
+        break;
+
+    case 0176576:  // Стык С2: Регистр данных источника
+        result = 0370;
+        break;
+
+    default:
+        if (!(((m_Port176644 & 0x103) == 0x100) && m_Port176646 == a16))
+        {
+        }
+        else
+            result = 0x0;
+    }
+
+    instime_t dt;
+    if ( (a16e >= 0176000) && (a16e <= 0177777) ) {
+        const size_t i = a16e - 0176000;
+        const auto& iotm = bus_times_.IO[i];
+
+        if (t == rmw_e::single)
+            dt = iotm.R;
+        // rmw_e::rmw postponed to write phase of transaction
+    }
+
+    return rsp_s{result, dt};
+}
+
+CMemoryController::rsp_s CFirstMemoryController::write_port_word(unsigned int a16, bool sel, unsigned int data, bool byte, rmw_e t)
+{
+    const unsigned int a16e = a16 & 0xFFFE;
+//    const unsigned int a0   = a16 & 0x0001;
+    unsigned int word = data;
+
+    int result = data;
+    switch (a16e)
+    {
+    case 0176640:  // Plane address register
+        m_Port176640 = word;
+        m_Port176642 = MAKEWORD(
+                m_pBoard->GetRAMByte(1, m_Port176640),
+                m_pBoard->GetRAMByte(2, m_Port176640)
+        );
+        break;
+
+    case 0176642:  // Plane 1 & 2 data register
+        m_Port176642 = word;
+        m_pBoard->SetRAMByte(1, m_Port176640, (uint8_t)(word & 0xff));
+        m_pBoard->SetRAMByte(2, m_Port176640, (uint8_t)((word >> 8) & 0xff));
+        break;
+
+    case 0176644:
+        word &= 0x3FF;
+        m_Port176644 = word;
+        if ((word & 0x101) == 0x101)
+        {
+            if ((m_pProcessor->GetVIRQ(6)) != 0)
+                m_pProcessor->InterruptVIRQ(6, word & 0xFC);
+        }
+        else
+        {
+            m_pProcessor->InterruptVIRQ(6, 0);
+        }
+        break;
+
+    case 0176646:
+        m_Port176646 = word;
+        break;
+
+    case 0177560:
+        m_pBoard->ChanRxStateSetCPU(0, (uint8_t) word);
+        break;
+
+    case 0177562:
+        break;
+
+    case 0177564:
+        m_pBoard->ChanTxStateSetCPU(0, (uint8_t) word);
+        break;
+
+    case 0177566:  // TX data, channel 0
+        m_pBoard->ChanWriteByCPU(0, (uint8_t) word);
+        break;
+
+    case 0176660:
+        m_pBoard->ChanRxStateSetCPU(1, (uint8_t) word);
+        break;
+
+    case 0176662:
+        break ;
+
+    case 0176664:
+        m_pBoard->ChanTxStateSetCPU(1, (uint8_t) word);
+        break;
+
+    case 0176666:  // TX data, channel 1
+        m_pBoard->ChanWriteByCPU(1, (uint8_t) word);
+        break;
+
+    case 0176674:
+        m_pBoard->ChanTxStateSetCPU(2, (uint8_t) word);
+        break;
+
+    case 0176676:  // TX data, channel 2
+        m_pBoard->ChanWriteByCPU(2, (uint8_t) word);
+        break;
+
+    case 0176670:
+    case 0176672:
+        break;
+
+    case 0176560: //network
+    // СА: Регистр состояния приемника
+        if (((m_Port176560 & 0300) == 0200) && (word & 0100))
+            m_pProcessor->InterruptVIRQ(9, 0360);
+        m_Port176560 = (m_Port176560 & ~0104) | (word & 0104);  // Bits 2,6 only
+        break;
+
+    case 0176562:  // СА: Регистр данных приемника
+    // недоступен по записи
+        break;
+
+    case 0176564:  // СА: Регистр состояния источника
+        if (((m_Port176564 & 0300) == 0200) && (word & 0100))
+            m_pProcessor->InterruptVIRQ(10, 0364);
+        m_Port176564 = (m_Port176564 & ~0105) | (word & 0105);  // Bits 0,2,6
+        break;
+
+    case 0176566:  // СА: Регистр данных источника
+    // нижние 8 бит доступны по записи
+        m_Port176566 = word & 0xff;
+        m_Port176564 &= ~0200;  // Reset bit 7 (Ready)
+        break;
+
+    case 0176570:  // Стык С2: Регистр состояния приемника
+        m_Port176570 = (m_Port176570 & ~0100) | (word & 0100);  // Bit 6 only
+        break;
+
+    case 0176572:  // Стык С2: Регистр данных приемника
+    // недоступен по записи
+        break;
+
+    case 0176574:  // Стык С2: Регистр состояния источника
+        if (((m_Port176574 & 0300) == 0200) && (word & 0100))
+            m_pProcessor->InterruptVIRQ(8, 0374);
+        m_Port176574 = (m_Port176574 & ~0105) | (word & 0105);  // Bits 0,2,6
+        break;
+
+    case 0176576:  // Стык С2: Регистр данных источника
+    // нижние 8 бит доступны по записи
+        m_Port176576 = word & 0xff;
+        m_Port176574 &= ~128;  // Reset bit 7 (Ready)
+        break;
+
+    default:
+        if (!(((m_Port176644 & 0x103) == 0x100) && m_Port176646 == a16))
+        {
+            result = -1; // no reply
+        }
+        break;
+    }
+
+    instime_t dt;
+    if ( (a16e >= 0176000) && (a16e <= 0177777) ) {
+        const size_t i = a16e - 0176000;
+        const auto& iotm = bus_times_.IO[i];
+
+        if (t == rmw_e::single)
+            dt = iotm.W;
+        else {
+            if (byte)
+                dt = iotm.RMWb;
+            else
+                dt = iotm.RMW;
+        }
+    }
+
+    return rsp_s{result, dt};
+}
+
+CMemoryController::rsp_s CSecondMemoryController::read_port_word(unsigned int a16, bool sel, rmw_e t)
+{
+    const unsigned int a16e = a16 & 0xFFFE;
+    const unsigned int a0   = a16 & 0x0001;
+
+    // TODO: refactor it
+    int result = -1;
+
+    switch (a16e)
+    {
+    case 0177010:
+        result = m_Port177010;  // Plane address register
+        break;
+
+    case 0177012:
+        result = m_Port177012;  // Plane 0 data register
+        break;
+
+    case 0177014:
+        result = m_Port177014;  // Plane 1 & 2 data register
+        break;
+
+    case 0177016:
+        result = m_Port177016;  // Sprite Color
+        break;
+
+    case 0177020:
+        result = m_Port177020;  // Plane 0,1,2 bits 0-3
+        break;
+
+    case 0177022:
+        result = m_Port177022;  // Plane 0,1,2 bits 4-7
+        break;
+
+    case 0177024:  // Load background registers
+        {
+            uint8_t planes[3];
+            planes[0] = m_pBoard->GetRAMByte(0, m_Port177010);
+            planes[1] = m_pBoard->GetRAMByte(1, m_Port177010);
+            planes[2] = m_pBoard->GetRAMByte(2, m_Port177010);
+
+            m_Port177020 = 0;
+            m_Port177022 = 0;
+
+            m_Port177020 |= ((planes[0] & (1 << 0)) ? 1 : 0) << 0;
+            m_Port177020 |= ((planes[0] & (1 << 1)) ? 1 : 0) << 4;
+            m_Port177020 |= ((planes[0] & (1 << 2)) ? 1 : 0) << 8;
+            m_Port177020 |= ((planes[0] & (1 << 3)) ? 1 : 0) << 12;
+            m_Port177022 |= ((planes[0] & (1 << 4)) ? 1 : 0) << 0;
+            m_Port177022 |= ((planes[0] & (1 << 5)) ? 1 : 0) << 4;
+            m_Port177022 |= ((planes[0] & (1 << 6)) ? 1 : 0) << 8;
+            m_Port177022 |= ((planes[0] & (1 << 7)) ? 1 : 0) << 12;
+
+            m_Port177020 |= ((planes[1] & (1 << 0)) ? 1 : 0) << 1;
+            m_Port177020 |= ((planes[1] & (1 << 1)) ? 1 : 0) << 5;
+            m_Port177020 |= ((planes[1] & (1 << 2)) ? 1 : 0) << 9;
+            m_Port177020 |= ((planes[1] & (1 << 3)) ? 1 : 0) << 13;
+            m_Port177022 |= ((planes[1] & (1 << 4)) ? 1 : 0) << 1;
+            m_Port177022 |= ((planes[1] & (1 << 5)) ? 1 : 0) << 5;
+            m_Port177022 |= ((planes[1] & (1 << 6)) ? 1 : 0) << 9;
+            m_Port177022 |= ((planes[1] & (1 << 7)) ? 1 : 0) << 13;
+
+            m_Port177020 |= ((planes[2] & (1 << 0)) ? 1 : 0) << 2;
+            m_Port177020 |= ((planes[2] & (1 << 1)) ? 1 : 0) << 6;
+            m_Port177020 |= ((planes[2] & (1 << 2)) ? 1 : 0) << 10;
+            m_Port177020 |= ((planes[2] & (1 << 3)) ? 1 : 0) << 14;
+            m_Port177022 |= ((planes[2] & (1 << 4)) ? 1 : 0) << 2;
+            m_Port177022 |= ((planes[2] & (1 << 5)) ? 1 : 0) << 6;
+            m_Port177022 |= ((planes[2] & (1 << 6)) ? 1 : 0) << 10;
+            m_Port177022 |= ((planes[2] & (1 << 7)) ? 1 : 0) << 14;
+        }
+        result = 0;
+        break;
+
+    case 0177026:
+        result = m_Port177026;  // Plane Mask
+        break;
+
+    // reserved
+    case 0177030:
+    case 0177032:
+    case 0177034:
+    case 0177036:
+    case 0177040:
+    case 0177042:
+    case 0177044:
+    case 0177046:
+    case 0177050:
+    case 0177052:
+        result = 0177777;
+        break;
+
+    case 0177054:
+        result = m_Port177054;
+        break;
+
+    case 0177060:
+        result = m_pBoard->ChanReadByPPU(0);
+        break;
+
+    case 0177062:
+        result = m_pBoard->ChanReadByPPU(1);
+        break;
+
+    case 0177064:
+        result = m_pBoard->ChanReadByPPU(2);
+        break;
+
+    case 0177066:
+        result = m_pBoard->ChanRxStateGetPPU();
+        break;
+
+    case 0177070:
+    case 0177072:
+    case 0177074:
+        result = 0;
+        break;
+
+    case 0177076:
+        result = m_pBoard->ChanTxStateGetPPU();
+        break;
+
+    // i8255 port A -- Parallel port output data
+    // i8255 port B
+    case 0177100:
+        result = a0 ? m_Port177101 : m_Port177100;
+        break;
+
+    // i8255 port C
+    // i8255 control
+    case 0177102:
+        result = a0 ? 0 : (m_Port177102 & 0x0f);
+        break;
+
+    case 0177700:
+        result = m_Port177700;  // Keyboard status
+        break;
+
+    case 0177702:  // Keyboard data
+        {
+            uint16_t a = m_Port177702;
+            if (m_Port177700 & 0200) m_Port177702 = m_pBoard->GetScannedKey();
+            m_Port177700 &= ~0200;  // Reset bit 7 - "data ready" flag
+            m_pProcessor->InterruptVIRQ(3, 0);
+            result = a;
+        }
+        break;
+
+    case 0177704:
+        result = 010000; //!!!
+        break;
+
+    case 0177710:
+        result = m_pBoard->GetTimerState();
+        break;
+
+    case 0177714:
+        result = m_pBoard->GetTimerValue();
+        break;
+
+    case 0177716:
+        result = m_Port177716;  // System control register
+        break;
+
+    case 0177130:  // FDD status
+        result = m_pBoard->GetFloppyState();
+        break;
+
+    case 0177132: //fdd data
+        result = m_pBoard->GetFloppyData();
+        break;
+
+        // HDD ports
+    case 0110016: case 0111016:
+    case 0110014:
+    case 0110012:
+    case 0110010:
+    case 0110006:
+    case 0110004:
+    case 0110002:
+    case 0110000:
+        result = m_pBoard->GetHardPortWord(((m_Port177054 & 8) == 0) ? 1 : 2, a16);
+        break;
+
+    case 0114002:
+        //DebugLogFormat(_T("GetPortWord PPU %06o\r\n"), address);
+        result = 0;
+        break;
+
+    default:
+        //DebugLogFormat(_T("MemoryError GetPortWord PPU %06o\r\n"), address);
+        break;
+    }
+
+    instime_t dt;
+    if ( (a16e >= 0177000) && (a16e <= 0177777) ) {
+        const size_t i = a16e - 0177000;
+        const auto& iotm = bus_times_.IO[i];
+
+        if (t == rmw_e::single)
+            dt = iotm.R;
+        // rmw_e::rmw postponed to write phase of transaction
+    }
+
+    return rsp_s{result, dt};
+}
+
+CMemoryController::rsp_s CSecondMemoryController::write_port_word(unsigned int a16, bool sel, unsigned int data, bool byte, rmw_e t)
+{
+    // TODO: WTF???
+    if ((a16 >= 0110000) && (a16 < 0120000))
+        a16 &= 0110016;
+
+    const unsigned int a16e = a16 & 0xFFFE;
+    const unsigned int a0   = a16 & 0x0001;
+    unsigned int word = data;
+
+    int result = data;
+    switch (a16e)
+    {
+    case 0177010:  // Plane address register
+        m_Port177010 = word;
+        m_Port177012 = m_pBoard->GetRAMByte(0, word);
+        m_Port177014 = MAKEWORD(
+                m_pBoard->GetRAMByte(1, word),
+                m_pBoard->GetRAMByte(2, word));
+        break;
+
+    case 0177012:  // Plane 0 data register
+        m_Port177012 = word & 0xFF;
+        m_pBoard->SetRAMByte(0, m_Port177010, (uint8_t)(word & 0xff));
+        break;
+
+    case 0177014:  // Plane 1 & 2 data register
+        m_Port177014 = word;
+        m_pBoard->SetRAMByte(1, m_Port177010, (uint8_t)(word & 0xff));
+        m_pBoard->SetRAMByte(2, m_Port177010, (uint8_t)((word >> 8) & 0xff));
+        break;
+
+    case 0177016:  // Sprite Color
+        m_Port177016 = word & 7;
+        break;
+
+    case 0177020:  // Background color code, plane 0,1,2 bits 0-3
+        m_Port177020 = word;
+        break;
+
+    case 0177022:  // Background color code, plane 0,1,2 bits 4-7
+        m_Port177022 = word;
+        break;
+
+    case 0177024:  // Pixel byte
+        {
+            m_Port177024 = word & 0xFF;
+            // Convert background into planes... it could've been modified by user
+            uint8_t planebyte[3];
+            planebyte[0] = ((m_Port177020 & (1 << 0)) ? 1 : 0) << 0;
+            planebyte[0] |= ((m_Port177020 & (1 << 4)) ? 1 : 0) << 1;
+            planebyte[0] |= ((m_Port177020 & (1 << 8)) ? 1 : 0) << 2;
+            planebyte[0] |= ((m_Port177020 & (1 << 12)) ? 1 : 0) << 3;
+            planebyte[0] |= ((m_Port177022 & (1 << 0)) ? 1 : 0) << 4;
+            planebyte[0] |= ((m_Port177022 & (1 << 4)) ? 1 : 0) << 5;
+            planebyte[0] |= ((m_Port177022 & (1 << 8)) ? 1 : 0) << 6;
+            planebyte[0] |= ((m_Port177022 & (1 << 12)) ? 1 : 0) << 7;
+
+            planebyte[1] = ((m_Port177020 & (1 << 1)) ? 1 : 0) << 0;
+            planebyte[1] |= ((m_Port177020 & (1 << 5)) ? 1 : 0) << 1;
+            planebyte[1] |= ((m_Port177020 & (1 << 9)) ? 1 : 0) << 2;
+            planebyte[1] |= ((m_Port177020 & (1 << 13)) ? 1 : 0) << 3;
+            planebyte[1] |= ((m_Port177022 & (1 << 1)) ? 1 : 0) << 4;
+            planebyte[1] |= ((m_Port177022 & (1 << 5)) ? 1 : 0) << 5;
+            planebyte[1] |= ((m_Port177022 & (1 << 9)) ? 1 : 0) << 6;
+            planebyte[1] |= ((m_Port177022 & (1 << 13)) ? 1 : 0) << 7;
+
+            planebyte[2] = ((m_Port177020 & (1 << 2)) ? 1 : 0) << 0;
+            planebyte[2] |= ((m_Port177020 & (1 << 6)) ? 1 : 0) << 1;
+            planebyte[2] |= ((m_Port177020 & (1 << 10)) ? 1 : 0) << 2;
+            planebyte[2] |= ((m_Port177020 & (1 << 14)) ? 1 : 0) << 3;
+            planebyte[2] |= ((m_Port177022 & (1 << 2)) ? 1 : 0) << 4;
+            planebyte[2] |= ((m_Port177022 & (1 << 6)) ? 1 : 0) << 5;
+            planebyte[2] |= ((m_Port177022 & (1 << 10)) ? 1 : 0) << 6;
+            planebyte[2] |= ((m_Port177022 & (1 << 14)) ? 1 : 0) << 7;
+            // Draw sprite
+            planebyte[0] &= ~m_Port177024;
+            if (m_Port177016 & 1)
+                planebyte[0] |= m_Port177024;
+            planebyte[1] &= ~m_Port177024;
+            if (m_Port177016 & 2)
+                planebyte[1] |= m_Port177024;
+            planebyte[2] &= ~m_Port177024;
+            if (m_Port177016 & 4)
+                planebyte[2] |= m_Port177024;
+
+            if ((m_Port177026 & 1) == 0)
+                m_pBoard->SetRAMByte(0, m_Port177010, planebyte[0]);
+            if ((m_Port177026 & 2) == 0)
+                m_pBoard->SetRAMByte(1, m_Port177010, planebyte[1]);
+            if ((m_Port177026 & 4) == 0)
+                m_pBoard->SetRAMByte(2, m_Port177010, planebyte[2]);
+        }
+        break;
+
+    case 0177026:  // Pixel mask
+        m_Port177026 = word & 7;
+        break;
+
+    // reserved
+    case 0177030:
+    case 0177032:
+    case 0177034:
+    case 0177036:
+    case 0177040:
+    case 0177042:
+    case 0177044:
+    case 0177046:
+    case 0177050:
+    case 0177052:
+        break;
+
+    case 0177054:  // Address space control
+        //DebugPrintFormat(_T("W %s, %s\r\n"), oct1, oct);
+        {
+            uint16_t oldvalue = m_Port177054;
+            m_Port177054 = word & 01777;
+            if (oldvalue != m_Port177054)
+                UpdateMemoryMap();
+        }
+        break;
+
+    case 0177060:
+    case 0177062:
+    case 0177064:
+        break;
+
+    case 0177066:  // RX status, channels 0,1,2
+        m_pBoard->ChanRxStateSetPPU((uint8_t)word);
+        break;
+
+    case 0177070:  // TX data, channel 0
+        m_pBoard->ChanWriteByPPU(0, (uint8_t)word);
+        break;
+
+    case 0177072:  // TX data, channel 1
+        m_pBoard->ChanWriteByPPU(1, (uint8_t)word);
+        break;
+
+    case 0177074:
+        break;
+
+    case 0177076:  // TX status, channels 0,1
+        m_pBoard->ChanTxStateSetPPU((uint8_t)word);
+        break;
+
+    // i8255 port A -- Parallel port output data
+    // i8255 port B
+    case 0177100:
+        if (a0 == 0)
+            m_Port177100 = (uint8_t)(word & 0xff);
+        break;
+    case 0177102:
+        if (a0 == 0) // i8255 port C
+            m_Port177102 = uint8_t((m_Port177102 & 0x0f) | (word & 0xf0));
+        else // i8255 control byte
+            m_Port177100 = 0377;  // Writing to control register resets port A
+        break;
+
+    case 0177130:  // FDD status
+        m_pBoard->SetFloppyState(word);
+        break;
+
+    case 0177132:  // FDD data
+        m_pBoard->SetFloppyData(word);
+        break;
+
+    case 0177700:  // Keyboard status
+        if (((m_Port177700 & 0100) == 0) && (word & 0100) && (m_Port177700 & 0200))
+            m_pProcessor->InterruptVIRQ(3, 0300);
+        if ((word & 0100) == 0)
+            m_pProcessor->InterruptVIRQ(3, 0);
+        m_Port177700 = (m_Port177700 & 0177677) | (word & 0100);
+        break;
+
+    case 0177702:  // Keyboard data register
+        break;
+
+    case 0177704: // fdd params:
+        //DebugLogFormat(_T("FDD 177704 W %s, %s, %s\r\n"), oct2, oct1, oct);
+        break;
+
+    case 0177710: //timer status
+        m_pBoard->SetTimerState(word);
+        break;
+
+    case 0177712: //timer latch
+        m_pBoard->SetTimerReload(word);
+        break;
+
+    case 0177714: //timer counter
+        break;
+
+    case 0177716:  // System control register
+        {
+            CProcessor* pCPU = m_pBoard->GetCPU();
+            word &= 0137676;
+            pCPU->SetHALTPin((word & 020) ? true : false);
+            pCPU->SetDCLOPin((word & 040) ? true : false);
+            pCPU->SetACLOPin((word & 0100000) ? false : true);
+            m_Port177716 &= 1;
+            m_Port177716 |= word;
+            m_pBoard->SetSound(word);
+            break;
+        }
+
+        // HDD ports
+    case 0110016: case 0111016:
+    case 0110014:
+    case 0110012:
+    case 0110010:
+    case 0110006:
+    case 0110004:
+    case 0110002:
+    case 0110000:
+        //DebugLogFormat(_T("SetPortWord HDD %06o\r\n"), address);
+        m_pBoard->SetHardPortWord(((m_Port177054 & 8) == 0) ? 1 : 2, a16, word);
+        break;
+
+    case 0114002://STUB
+        //DebugLogFormat(_T("SetPortWord PPU %06o\r\n"), address);
+        break;
+
+    default:
+        //DebugLogFormat(_T("MemoryError SetPortWord PPU %06o\r\n"), address);
+        //m_pProcessor->MemoryError();
+        result = -1;
+        break;
+    }
+
+    instime_t dt;
+    if ( (a16e >= 0177000) && (a16e <= 0177777) ) {
+        const size_t i = a16e - 0177000;
+        const auto& iotm = bus_times_.IO[i];
+
+        if (t == rmw_e::single)
+            dt = iotm.W;
+        else {
+            if (byte)
+                dt = iotm.RMWb;
+            else
+                dt = iotm.RMW;
+        }
+    }
+
+    return rsp_s{result, dt};
+}
+#endif

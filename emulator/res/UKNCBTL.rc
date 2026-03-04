@@ -1,6 +1,6 @@
 // Microsoft Visual C++ generated resource script.
 //
-#include "resource.h"
+#include "Resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -63,6 +63,8 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 #pragma code_page(1252)
 #endif //_WIN32
 
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "../manifest.xml"
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Icon
@@ -86,18 +88,18 @@ BEGIN
     BEGIN
         MENUITEM "Save State…",                 ID_FILE_SAVESTATE,MFT_STRING,MFS_ENABLED
         MENUITEM "Load State…",                 ID_FILE_LOADSTATE,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
+        MENUITEM "",-1,MFT_SEPARATOR
         MENUITEM "Screenshot",                  ID_FILE_SCREENSHOT,MFT_STRING,MFS_ENABLED
         MENUITEM "Screenshot to Clipboard",     ID_FILE_SCREENSHOTTOCLIPBOARD,MFT_STRING,MFS_ENABLED
         MENUITEM "Save Screenshot as...",       ID_FILE_SAVESCREENSHOTAS,MFT_STRING,MFS_ENABLED
         MENUITEM "Screen Text to Clipboard",    ID_FILE_SCREENTOCLIPBOARD,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
+        MENUITEM "",-1,MFT_SEPARATOR
         MENUITEM "Create Disk...",              ID_FILE_CREATEDISK,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
+        MENUITEM "",-1,MFT_SEPARATOR
         MENUITEM "Settings General",            ID_FILE_SETTINGS,MFT_STRING,MFS_ENABLED
         MENUITEM "Settings Fonts and Colors",   ID_FILE_SETTINGS_COLORS,MFT_STRING,MFS_ENABLED
         MENUITEM "Settings On-Screen Display",  ID_FILE_SETTINGS_OSD,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
+        MENUITEM "",-1,MFT_SEPARATOR
         MENUITEM "E&xit\tAlt+F4",               IDM_EXIT,MFT_STRING,MFS_ENABLED
     END
     POPUP "&View",                          65535,MFT_STRING,MFS_ENABLED
@@ -105,11 +107,11 @@ BEGIN
         MENUITEM "Toolbar",                     ID_VIEW_TOOLBAR,MFT_STRING,MFS_ENABLED
         MENUITEM "Keyboard",                    ID_VIEW_KEYBOARD,MFT_STRING,MFS_ENABLED
         MENUITEM "Tape",                        ID_VIEW_TAPE,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
+        MENUITEM "",-1,MFT_SEPARATOR
         MENUITEM "RGB Screen",                  ID_VIEW_RGBSCREEN,MFT_STRING,MFS_ENABLED
         MENUITEM "GRB Screen",                  ID_VIEW_GRBSCREEN,MFT_STRING,MFS_ENABLED
         MENUITEM "Grayscale Screen",            ID_VIEW_GRAYSCREEN,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
+        MENUITEM "",-1,MFT_SEPARATOR
         MENUITEM "On-Screen Display",           ID_VIEW_ONSCREENDISPLAY,MFT_STRING,MFS_ENABLED
         MENUITEM "Fullscreen",                  ID_VIEW_FULLSCREEN,MFT_STRING,MFS_ENABLED
     END
@@ -122,9 +124,9 @@ BEGIN
         MENUITEM "Run\tPlay/Pause",             ID_EMULATOR_RUN,MFT_STRING,MFS_ENABLED
         MENUITEM "Reset",                       ID_EMULATOR_RESET,MFT_STRING,MFS_ENABLED
         MENUITEM "Autostart",                   ID_EMULATOR_AUTOSTART,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
+        MENUITEM "",-1,MFT_SEPARATOR
         MENUITEM "Sound",                       ID_EMULATOR_SOUND,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
+        MENUITEM "",-1,MFT_SEPARATOR
         MENUITEM "Speed 25%",                   ID_EMULATOR_SPEED25
         MENUITEM "Speed 50%",                   ID_EMULATOR_SPEED50,MFT_STRING,MFS_ENABLED
         MENUITEM "Speed 100%",                  ID_EMULATOR_REALSPEED,MFT_STRING,MFS_ENABLED
@@ -137,12 +139,12 @@ BEGIN
         MENUITEM "Floppy MZ1:",                 ID_EMULATOR_FLOPPY1,MFT_STRING,MFS_ENABLED
         MENUITEM "Floppy MZ2:",                 ID_EMULATOR_FLOPPY2,MFT_STRING,MFS_ENABLED
         MENUITEM "Floppy MZ3:",                 ID_EMULATOR_FLOPPY3,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
+        MENUITEM "",-1,MFT_SEPARATOR
         MENUITEM "Cartridge 1",                 ID_EMULATOR_CARTRIDGE1,MFT_STRING,MFS_ENABLED
         MENUITEM "Hard Drive 1",                ID_EMULATOR_HARDDRIVE1,MFT_STRING,MFS_ENABLED
         MENUITEM "Cartridge 2",                 ID_EMULATOR_CARTRIDGE2,MFT_STRING,MFS_ENABLED
         MENUITEM "Hard Drive 2",                ID_EMULATOR_HARDDRIVE2,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
+        MENUITEM "",-1,MFT_SEPARATOR
         MENUITEM "Serial",                      ID_EMULATOR_SERIAL,MFT_STRING,MFS_ENABLED
         MENUITEM "Parallel",                    ID_EMULATOR_PARALLEL,MFT_STRING,MFS_ENABLED
         MENUITEM "Network",                     ID_EMULATOR_NETWORK,MFT_STRING,MFS_ENABLED
@@ -153,10 +155,10 @@ BEGIN
         MENUITEM "Switch CPU / PPU",            ID_DEBUG_CPUPPU,MFT_STRING,MFS_ENABLED
         MENUITEM "Sprite Viewer",               ID_DEBUG_SPRITES,MFT_STRING,MFS_ENABLED
         MENUITEM "Disasm Subtitles",            ID_DEBUG_SUBTITLES,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
+        MENUITEM "",-1,MFT_SEPARATOR
         MENUITEM "Step Into\tF8",               ID_DEBUG_STEPINTO,MFT_STRING,MFS_ENABLED
         MENUITEM "Step Over\tShift+F8",         ID_DEBUG_STEPOVER,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
+        MENUITEM "",-1,MFT_SEPARATOR
         MENUITEM "Clear Console Log",           ID_DEBUG_CLEARCONSOLE,MFT_STRING,MFS_ENABLED
         MENUITEM "Delete All Breakpoints",      ID_DEBUG_DELETEALLBREAKPTS,MFT_STRING,MFS_ENABLED
     END
